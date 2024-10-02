@@ -1,4 +1,4 @@
-#include "expected.hpp"
+#include <expected>
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -140,6 +140,19 @@ auto distance_squared(point_like auto const& pose1, point_like auto const& pose2
   return dx * dx + dy * dy;
 }
 
+/**
+ * @brief Project a point from a start in a direction for a distance.
+ *
+ * @param origin is the starting point for the projection
+ * @param target to project towards
+ * @param distance from origin to project
+ * @returns a new point, @p distance away from @p origin in the direction of @p target
+ */
+auto project(point_like auto const& origin, point_like auto const& target, double distance) {
+  auto const direction = normalize(target - origin);
+  return origin + distance * direction;
+}
+
 bool is_between(auto const& value, auto const& lo, auto const& hi) requires
     std::totally_ordered_with<decltype(lo), decltype(value)> and
     std::totally_ordered_with<decltype(value), decltype(hi)> {
@@ -157,29 +170,27 @@ double heuristic(node_t const& node1, node_t const& node2) {
 }
 
 /**
- * @brief Parametrically check for if there are collisions between the obstacle and path between
- * nodes
+ * @brief Check for collisions between the obstacles and the line between points
  *
- * @param	node1 first node to check between for obstacles
- * @param	node2 second node to check between for obstacles
+ * @param	p1 is the start of the line segment
+ * @param	p2 is the end of the line segment
  * @param	obstacles to check for collisions with along the line
- * @returns true if along the line between the two nodes it intersects with any obstacle
+ * @returns `true` if there is an intersection along the line with an obstacle
  */
-bool in_collision(node_t const& node1, node_t const& node2,
+bool in_collision(point_like auto const& p1, point_like auto const& p2,
                   std::vector<circle_t> const& obstacles) {
-  auto const A = distance_squared(node1.position, node2.position);
-  for (auto const& obstacle : obstacles) {
-    if (distance_between(node1.position, obstacle) <= obstacle.radius) {
+  auto const A = distance_squared(p1, p2);
+  return std::ranges::any_of(obstacles, [&](auto const& obstacle) {
+    if (distance_between(p1, obstacle) <= obstacle.radius) {
       return true;
     }
-    if (distance_between(node2.position, obstacle) <= obstacle.radius) {
+    if (distance_between(p2, obstacle) <= obstacle.radius) {
       return true;
     }
     // Try and solve for quadratic equation that results from finding the intersection between a
     // line and circle
-    auto const B = 2 * ((node2.position.x - node1.position.x) * (node1.position.x - obstacle.x) +
-                        (node2.position.y - node1.position.y) * (node1.position.y - obstacle.y));
-    auto const C = distance_squared(node1.position, obstacle) - obstacle.radius * obstacle.radius;
+    auto const B = 2 * ((p2.x - p1.x) * (p1.x - obstacle.x) + (p2.y - p1.y) * (p1.y - obstacle.y));
+    auto const C = distance_squared(p1, obstacle) - obstacle.radius * obstacle.radius;
     // If the discriminant is zero or positive, then check if the line segment intersects
     // as opposed to the infinite line
     if (auto const discriminant = B * B - 4 * A * C; discriminant >= 0.) {
@@ -191,8 +202,8 @@ bool in_collision(node_t const& node1, node_t const& node2,
       }
     }
     // If the discriminant is less zero, then the line does not intersect with the circle
-  }
   return false;
+  });
 }
 
 bool in_collision(point_like auto const& position, std::vector<circle_t> const& obstacles) {
@@ -204,7 +215,7 @@ bool in_collision(point_like auto const& position, std::vector<circle_t> const& 
   return false;
 }
 
-tl::expected<node_t, std::string> sample_space(
+std::expected<node_t, std::string> sample_space(
     std::uniform_random_bit_generator auto& random_generator, planning_context_t const& context) {
   auto x_distribution =
       std::uniform_real_distribution<>{context.x_limits.min, context.x_limits.max};
@@ -213,12 +224,12 @@ tl::expected<node_t, std::string> sample_space(
   auto const sample_position =
       position_t{x_distribution(random_generator), y_distribution(random_generator)};
   if (in_collision(sample_position, context.obstacles)) {
-    return tl::unexpected(std::string{"Sampled node is in collision with obstacle"});
+    return std::unexpected(std::string{"Sampled node is in collision with obstacle"});
   }
   return node_t{sample_position};
 }
 
-tl::expected<node_t, std::string> sample_space_or_goal(
+std::expected<node_t, std::string> sample_space_or_goal(
     std::uniform_random_bit_generator auto& random_generator, planning_context_t const& context,
     std::optional<node_t> goal_maybe) {
   if (goal_maybe and bernoulli_trial(random_generator, context.goal_probability)) {
@@ -227,30 +238,18 @@ tl::expected<node_t, std::string> sample_space_or_goal(
   return sample_space(random_generator, context);
 }
 
-tl::expected<node_t, std::string> find_neighbor(node_t const& node,
+std::expected<node_t, std::string> find_neighbor(node_t const& node,
                                                 std::vector<node_t> const& nodes) {
   auto const closest_node = std::ranges::min_element(nodes, [&](auto const& lhs, auto const& rhs) {
     return distance_between(lhs.position, node.position) <
            distance_between(rhs.position, node.position);
   });
   if (closest_node == nodes.end()) {
-    return tl::unexpected(std::string{"Node does not have any neighbors"});
+    return std::unexpected(std::string{"Node does not have any neighbors"});
   }
   return *closest_node;
 }
 
-/**
- * @brief Project a point from a start in a direction for a distance.
- *
- * @param origin is the starting point for the projection
- * @param target to project towards
- * @param distance from origin to project
- * @returns a new point, @p distance away from @p origin in the direction of @p target
- */
-auto project(point_like auto const& origin, point_like auto const& target, double distance) {
-  auto const direction = normalize(target - origin);
-  return origin + distance * direction;
-}
 
 node_t project_sample(planning_context_t const& context, node_t const& sampled,
                       node_t const& closest) {
@@ -262,13 +261,13 @@ node_t project_sample(planning_context_t const& context, node_t const& sampled,
   return sampled;
 }
 
-tl::expected<node_id_t, std::string> expand_tree(planning_context_t const& context,
+std::expected<node_id_t, std::string> expand_tree(planning_context_t const& context,
                                                  node_t sampled_node, tree_t& tree) {
   return find_neighbor(sampled_node, tree.nodes)
-      .and_then([&](auto const& closest) -> tl::expected<node_id_t, std::string> {
+      .and_then([&](auto const& closest) -> std::expected<node_id_t, std::string> {
         auto const sample = project_sample(context, sampled_node, closest);
-        if (in_collision(closest, sample, context.obstacles)) {
-          return tl::unexpected(std::string{"Sampled node was in collision"});
+        if (in_collision(closest.position, sample.position, context.obstacles)) {
+          return std::unexpected(std::string{"Sampled node was in collision"});
         }
         // Add to tree
         auto const cost = heuristic(closest, sample);
@@ -281,7 +280,7 @@ tl::expected<node_id_t, std::string> expand_tree(planning_context_t const& conte
 struct rrt_t {
   explicit rrt_t(uint32_t seed) : random_generator_{seed} {}
 
-  [[nodiscard]] tl::expected<tree_t, std::string> operator()(node_t const& start,
+  [[nodiscard]] std::expected<tree_t, std::string> operator()(node_t const& start,
                                                              node_t const& goal,
                                                              planning_context_t const& context) {
     auto tree = tree_t{};
@@ -298,7 +297,7 @@ struct rrt_t {
         return tree;
       }
     }
-    return tl::unexpected(std::string{"RRT failed to reach goal"});
+    return std::unexpected(std::string{"RRT failed to reach goal"});
   }
 
  private:

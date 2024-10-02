@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.22.1)
 project(spanny CXX)
 
 add_subdirectory(third_party SYSTEM)
@@ -22,9 +22,9 @@ target_compile_features(spanny3 INTERFACE cxx_std_20)
 add_executable(rrt
   src/rrt2.cpp
 )
-target_link_libraries(rrt PRIVATE serial mdspan expected nlohmann::json)
-target_include_directories(rrt INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>)
-target_compile_features(rrt INTERFACE cxx_std_20)
+target_link_libraries(rrt PRIVATE mdspan nlohmann::json)
+target_include_directories(rrt PRIVATE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>)
+target_compile_features(rrt PRIVATE cxx_std_23)
 
 find_package(OpenCV REQUIRED)
 

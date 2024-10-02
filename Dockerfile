@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM ubuntu:22.04 as upstream
+FROM ubuntu:24.04 as upstream
 
 # Prevent the interactive wizards from stopping the build
 ARG DEBIAN_FRONTEND=noninteractive
@@ -10,7 +10,6 @@ RUN --mount=type=cache,target=/var/cache/apt,id=apt \
   apt-get update -y && apt-get install -q -y --no-install-recommends \
   build-essential        \
   cmake                  \
-  lsb-core               \
   wget                   \
   && rm -rf /var/lib/apt/lists/*
 
@@ -52,23 +51,21 @@ RUN --mount=type=cache,target=/var/cache/apt,id=apt \
   && rm -rf /var/lib/apt/lists/*
 
 # install developer tools
-RUN python3 -m pip install --no-cache-dir \
-  pre-commit==3.0.4 \
-  elsie==3.4
+RUN python3 -m pip install --no-cache-dir --break-system-packages \
+  pre-commit
 
 # install hadolint
 RUN wget -q -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-Linux-x86_64 \
   && chmod +x /bin/hadolint
 
 # Setup user home directory
-# --no-log-init helps with excessively long UIDs
-RUN groupadd --gid $GID $USER \
-  && useradd --no-log-init --uid $GID --gid $UID -m $USER --groups sudo,dialout \
-  && echo $USER ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USER \
-  && chmod 0440 /etc/sudoers.d/$USER \
-  && echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /home/${USER}/.profile \
-  && touch /home/${USER}/.bashrc \
-  && chown -R ${GID}:${UID} /home/${USER}
+RUN usermod -l $USER ubuntu \
+    && groupmod -n $USER ubuntu \
+    && usermod -d /home/$USER -m $USER \
+    && echo "$USER ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/$USER \
+    && chmod 0440 /etc/sudoers.d/$USER \
+    && touch /home/$USER/.bashrc \
+    && chown -R $UID:$GID /home/$USER
 
 USER $USER
 ENV SHELL /bin/bash
