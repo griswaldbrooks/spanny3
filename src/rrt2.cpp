@@ -4,11 +4,16 @@
 #include <cmath>
 #include <concepts>
 #include <iostream>
+#include <optional>
 #include <random>
 #include <ranges>
 #include <string>
 #include <vector>
 
+bool bernoulli_trial(std::uniform_random_bit_generator auto& random_generator, double probability) {
+  std::bernoulli_distribution distribution{probability};
+  return distribution(random_generator);
+}
 template <typename T>
 concept point_like = requires(T t) {
   { t.x } -> std::convertible_to<double>;
@@ -23,11 +28,75 @@ struct bounds_t {
   double min, max;
 };
 
+struct planning_context_t {
+  bounds_t x_limits, y_limits;
+  std::size_t expansion_limit;
+  double sample_distance;
+  double goal_probability;
+  std::vector<circle_t> obstacles;
+};
+
 using node_id_t = std::size_t;
+
+struct displacement_t {
+  double x, y;
+  // ordering comparators probably don't make sense?
+  // auto operator<=>(displacement_t const&) const = default;
+};
+
+displacement_t operator+(displacement_t const& lhs, displacement_t const& rhs) {
+  return {lhs.x + rhs.x, lhs.y + rhs.y};
+}
+displacement_t operator-(displacement_t const& lhs, displacement_t const& rhs) {
+  return {lhs.x - rhs.x, lhs.y - rhs.y};
+}
+displacement_t operator-(displacement_t const& value) { return {-value.x, -value.y}; }
+displacement_t operator*(displacement_t const& disp, std::floating_point auto scalar) {
+  return {disp.x * scalar, disp.y * scalar};
+}
+displacement_t operator*(std::floating_point auto scalar, displacement_t const& disp) {
+  return {disp.x * scalar, disp.y * scalar};
+}
+displacement_t operator/(displacement_t const& disp, std::floating_point auto scalar) {
+  return {disp.x / scalar, disp.y / scalar};
+}
+displacement_t& operator+=(displacement_t& lhs, displacement_t const& rhs) {
+  lhs.x += rhs.x;
+  lhs.y += rhs.y;
+  return lhs;
+}
+displacement_t& operator-=(displacement_t& lhs, displacement_t const& rhs) {
+  lhs.x -= rhs.x;
+  lhs.y -= rhs.y;
+  return lhs;
+}
+displacement_t& operator*=(displacement_t& disp, std::floating_point auto scalar) {
+  disp.x *= scalar;
+  disp.y *= scalar;
+  return disp;
+}
+displacement_t& operator/=(displacement_t& disp, std::floating_point auto scalar) {
+  disp.x /= scalar;
+  disp.y /= scalar;
+  return disp;
+}
 
 struct position_t {
   double x, y;
 };
+
+displacement_t operator-(position_t const& lhs, position_t const& rhs) {
+  return {lhs.x - rhs.x, lhs.y - rhs.y};
+}
+position_t operator-(position_t const& pos, displacement_t const& disp) {
+  return {pos.x - disp.x, pos.y - disp.y};
+}
+position_t operator+(position_t const& pos, displacement_t const& disp) {
+  return {pos.x + disp.x, pos.y + disp.y};
+}
+position_t operator+(displacement_t const& disp, position_t const& pos) {
+  return {pos.x + disp.x, pos.y + disp.y};
+}
 
 template <>
 struct std::hash<position_t> {
@@ -39,15 +108,27 @@ struct std::hash<position_t> {
 };
 
 struct node_t {
+  explicit node_t(position_t p) : id{std::hash<position_t>{}(p)}, position{std::move(p)} {}
   node_id_t id;
   position_t position;
-  double cost;
 };
 
 struct edge_t {
   node_id_t parent, child;
   double cost;
 };
+
+struct tree_t {
+  std::vector<node_t> nodes;
+  std::vector<edge_t> edges;
+};
+
+auto magnitude(displacement_t const& p) { return std::hypot(p.x, p.y); }
+
+displacement_t normalize(displacement_t const& d) {
+  auto const l = magnitude(d);
+  return d / l;
+}
 
 auto distance_between(point_like auto const& pose1, point_like auto const& pose2) {
   return std::hypot(pose2.x - pose1.x, pose2.y - pose1.y);
@@ -114,26 +195,6 @@ bool in_collision(node_t const& node1, node_t const& node2,
   return false;
 }
 
-/**
- * @brief Create a new node along a line from node1 to node2, given the distance from node 1
- *
- * @param node_number to id the new node with
- * @param node1 to use at starting point
- * @param node2 to go in the direction of
- * @param distance from node1 to place the new node
- * @returns a new node along the line
- */
-node_t new_node_along_line(node_t const& node1, node_t const& node2, double distance) {
-  // Create a vector in the direction of the second node of magnitude distance
-  auto const theta =
-      std::atan2(node2.position.y - node1.position.y, node2.position.x - node1.position.x);
-  auto const x = distance * std::cos(theta) + node1.position.x;
-  auto const y = distance * std::sin(theta) + node1.position.y;
-  auto const p = position_t{x, y};
-
-  return {std::hash<position_t>{}(p), p, 0.};
-}
-
 bool in_collision(point_like auto const& position, std::vector<circle_t> const& obstacles) {
   for (auto const& obstacle : obstacles) {
     if (distance_between(obstacle, position) < obstacle.radius) {
@@ -143,146 +204,113 @@ bool in_collision(point_like auto const& position, std::vector<circle_t> const& 
   return false;
 }
 
-struct tree_t {
-  // TODO: add ability to be deterministically seeded
-  tree_t(bounds_t const& x_lims, bounds_t const& y_lims, std::vector<circle_t> obstacles)
-      : sample_goal_distribution_{0., 1.},
-        x_distribution_{x_lims.min, x_lims.max},
-        y_distribution_{y_lims.min, y_lims.max},
-        obstacles_{std::move(obstacles)} {}
+tl::expected<node_t, std::string> sample_space(
+    std::uniform_random_bit_generator auto& random_generator, planning_context_t const& context) {
+  auto x_distribution =
+      std::uniform_real_distribution<>{context.x_limits.min, context.x_limits.max};
+  auto y_distribution =
+      std::uniform_real_distribution<>{context.y_limits.min, context.y_limits.max};
+  auto const sample_position =
+      position_t{x_distribution(random_generator), y_distribution(random_generator)};
+  if (in_collision(sample_position, context.obstacles)) {
+    return tl::unexpected(std::string{"Sampled node is in collision with obstacle"});
+  }
+  return node_t{sample_position};
+}
 
-  // 	"""
-  // 	Generates RRT nodes and edges
-  //
-  // 	:param      x_limits:    The x limits
-  // 	:param      y_limits:    The y limits
-  // 	:param      start_node:  The start node
-  // 	:param      goal_node:   The goal node
-  // 	:param      obstacles:   The obstacles
-  // 	"""
-  tl::expected<bool, std::string> operator()(node_t const& start,
-                                             [[maybe_unused]] node_t const& goal) {
-    // Append the start node to the list of nodes
-    nodes_.push_back(start);
+tl::expected<node_t, std::string> sample_space_or_goal(
+    std::uniform_random_bit_generator auto& random_generator, planning_context_t const& context,
+    std::optional<node_t> goal_maybe) {
+  if (goal_maybe and bernoulli_trial(random_generator, context.goal_probability)) {
+    return goal_maybe.value();
+  }
+  return sample_space(random_generator, context);
+}
 
-    // Set max size of RRT to 1000 nodes
-    auto const max_size = 1000;
-    bool sampled_goal = false;
+tl::expected<node_t, std::string> find_neighbor(node_t const& node,
+                                                std::vector<node_t> const& nodes) {
+  auto const closest_node = std::ranges::min_element(nodes, [&](auto const& lhs, auto const& rhs) {
+    return distance_between(lhs.position, node.position) <
+           distance_between(rhs.position, node.position);
+  });
+  if (closest_node == nodes.end()) {
+    return tl::unexpected(std::string{"Node does not have any neighbors"});
+  }
+  return *closest_node;
+}
 
-    while (nodes_.size() < max_size) {
-      if (sample_goal()) {
-        auto const closest_node =
-            std::ranges::min_element(nodes_, [&](auto const& lhs, auto const& rhs) {
-              return heuristic(lhs, goal) < heuristic(rhs, goal);
-            });
-        auto const distance = 0.1;
-        // If we sampled the goal and the nearest node is too far, continue
-        if (heuristic(*closest_node, goal) > distance) {
-          continue;
+/**
+ * @brief Project a point from a start in a direction for a distance.
+ *
+ * @param origin is the starting point for the projection
+ * @param target to project towards
+ * @param distance from origin to project
+ * @returns a new point, @p distance away from @p origin in the direction of @p target
+ */
+auto project(point_like auto const& origin, point_like auto const& target, double distance) {
+  auto const direction = normalize(target - origin);
+  return origin + distance * direction;
+}
+
+node_t project_sample(planning_context_t const& context, node_t const& sampled,
+                      node_t const& closest) {
+  // If the sampled node is too far from the nearest node,
+  // make a closer node in the direction of sampled node
+  if (distance_between(closest.position, sampled.position) > context.sample_distance) {
+    return node_t{project(closest.position, sampled.position, context.sample_distance)};
+  }
+  return sampled;
+}
+
+tl::expected<node_id_t, std::string> expand_tree(planning_context_t const& context,
+                                                 node_t sampled_node, tree_t& tree) {
+  return find_neighbor(sampled_node, tree.nodes)
+      .and_then([&](auto const& closest) -> tl::expected<node_id_t, std::string> {
+        auto const sample = project_sample(context, sampled_node, closest);
+        if (in_collision(closest, sample, context.obstacles)) {
+          return tl::unexpected(std::string{"Sampled node was in collision"});
         }
-        nodes_.push_back(goal);
-        // Add edge
-        edges_.emplace_back(goal.id, closest_node->id, heuristic(*closest_node, goal));
-        sampled_goal = true;
-        break;
-      } else {
-        expand_random();
+        // Add to tree
+        auto const cost = heuristic(closest, sample);
+        tree.nodes.emplace_back(sample.position);
+        tree.edges.emplace_back(sample.id, closest.id, cost);
+        return sample.id;
+      });
+}
+
+struct rrt_t {
+  explicit rrt_t(uint32_t seed) : random_generator_{seed} {}
+
+  [[nodiscard]] tl::expected<tree_t, std::string> operator()(node_t const& start,
+                                                             node_t const& goal,
+                                                             planning_context_t const& context) {
+    auto tree = tree_t{};
+    tree.nodes.push_back(start);
+    auto const sample_the_space = [&] {
+      return sample_space_or_goal(random_generator_, context, goal);
+    };
+    auto const expand_the_tree = [&](auto const& node) { return expand_tree(context, node, tree); };
+    while (tree.nodes.size() < context.expansion_limit) {
+      auto const id_maybe = sample_the_space().and_then(expand_the_tree);
+      if (id_maybe == goal.id) {
+        // Sort the nodes by node number, for some reason...
+        std::ranges::sort(tree.nodes, {}, &node_t::id);
+        return tree;
       }
     }
-
-    std::cout << "nodes_.size() = " << nodes_.size() << "\n";
-    for (auto const& node : nodes_) {
-      std::cout << node.position.x << ", " << node.position.y << "\n";
-    }
-    if (not sampled_goal) {
-      return tl::unexpected(std::string{"RRT generation failure"});
-    }
-
-    // Sort the nodes by node number
-    std::ranges::sort(nodes_, {}, &node_t::id);
-    // return tree;
-    return true;
+    return tl::unexpected(std::string{"RRT failed to reach goal"});
   }
 
  private:
-  bool sample_goal(double goal_probability = 0.1) {
-    if (sample_goal_distribution_(gen_) < goal_probability) {
-      return true;
-    }
-    return false;
-  }
-
-  bool expand_random() {
-    auto const sampled_node_maybe = sample_random_node();
-    if (not sampled_node_maybe.has_value()) {
-      return false;
-    }
-    auto sampled_node = sampled_node_maybe.value();
-    // Find the nearest node
-    auto const closest_node =
-        std::ranges::min_element(nodes_, [&](auto const& lhs, auto const& rhs) {
-          return heuristic(lhs, sampled_node) < heuristic(rhs, sampled_node);
-        });
-    // If the sampled node is too far from the nearest node,
-    // make a closer node in the direction of sampled node
-    auto const distance = 0.1;
-    // If we sampled the goal and the nearest node is too far, continue
-    // if (sampled_goal and (running_min_cost > distance)) {
-    // 	sampled_goal = false;
-    // 	continue;
-    //   }
-    if (heuristic(*closest_node, sampled_node) > distance) {
-      sampled_node = new_node_along_line(*closest_node, sampled_node, distance);
-    }
-    // Is closest node to current sample collision free?
-    if (not in_collision(*closest_node, sampled_node, obstacles_)) {
-      // Get cost to goal
-      auto const cost_to_goal = heuristic(*closest_node, sampled_node);
-      // Add goal or current sample to nodes
-      // if (not sampled_goal) {
-      nodes_.emplace_back(sampled_node.id, sampled_node.position, cost_to_goal);
-      // } else {
-      // nodes_.push_back(goal);
-      // }
-      // Add edge
-      edges_.emplace_back(sampled_node.id, closest_node->id,
-                          heuristic(*closest_node, sampled_node));
-      // if (sampled_goal) {
-      // break;
-      // }
-      return true;
-    }
-    return false;
-  }
-
-  tl::expected<node_t, std::string> sample_random_node() {
-    // Sample from a uniform distribution
-    auto const sample_position = position_t{x_distribution_(gen_), y_distribution_(gen_)};
-    // std::cout << (x_samp > 0 ? "+" : "-") << (y_samp > 0 ? "+" : "-") << ",";
-    // std::cout << sample_position.x << ", " << sample_position.y << "\n";
-
-    // Check that the sample is not in an obstacle
-    if (in_collision(sample_position, obstacles_)) {
-      return tl::unexpected(std::string{"Sampled node is in collision with obstacle"});
-    }
-    return node_t{std::hash<position_t>{}(sample_position), sample_position, 0.};
-  }
-
-  std::mt19937 gen_;
-  std::uniform_real_distribution<> sample_goal_distribution_;
-  std::uniform_real_distribution<> x_distribution_;
-  std::uniform_real_distribution<> y_distribution_;
-  std::vector<node_t> nodes_;
-  std::vector<edge_t> edges_;
-  std::vector<circle_t> obstacles_;
+  std::mt19937 random_generator_;
 };
 
 int main() {
   // Define parameters
   auto const x_lims = bounds_t{-0.5, 0.5};
   auto const y_lims = bounds_t{-0.5, 0.5};
-  auto const start_node = node_t{0, -0.4, -0.4, 1.4142};
-  auto const goal_node = node_t{1, 0.4, 0.4, 0.0};
+  auto const start_node = node_t{position_t{-0.4, -0.4}};
+  auto const goal_node = node_t{position_t{0.4, 0.4}};
   auto const obstacles = std::vector<circle_t>{
       {0.0, 0.0, 0.1},    //
       {0.0, 0.1, 0.1},    //
@@ -294,13 +322,19 @@ int main() {
       {0.1, 0.4, 0.1}     //
   };
   auto const obstacles2 = std::vector<circle_t>{{0.2, 0.2, 0.1}};
+  auto const context = planning_context_t{x_lims, y_lims, 1000, 0.1, 0.1, obstacles2};
   // Try to generate the RRT until success
-  auto rrt = tree_t(x_lims, y_lims, obstacles2);
+  auto rrt = rrt_t(std::random_device{}());
   int count = 0;
   while (count < 1) {
-    auto const tree_maybe = rrt(start_node, goal_node);
+    auto const tree_maybe = rrt(start_node, goal_node, context);
     if (tree_maybe.has_value()) {
       std::cout << "Something worked?" << std::endl;
+      auto const& tree = tree_maybe.value();
+      std::cout << "nodes.size() = " << tree.nodes.size() << "\n";
+      for (auto const& node : tree.nodes) {
+        std::cout << node.position.x << ", " << node.position.y << "\n";
+      }
       break;
     }
     std::cout << "Retrying...\n";
