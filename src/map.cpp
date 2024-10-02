@@ -110,9 +110,7 @@ std::vector<Cell> bresenham_conversion(Cell const& start, Cell const& end) {
 
   std::vector<Cell> cells;
   std::transform(std::begin(pixels), std::end(pixels), std::back_inserter(cells),
-                 [](auto const& pixel) -> Cell {
-                   return {pixel[0], pixel[1]};
-                 });
+                 [](auto const& pixel) -> Cell { return {pixel[0], pixel[1]}; });
   return cells;
 }
 
@@ -219,7 +217,8 @@ double degrees_to_radians(double degrees) { return degrees * std::numbers::pi / 
 
 struct layout_rotatable {
   template <typename Extents>
-  requires(Extents::rank() == 2) struct mapping {
+    requires(Extents::rank() == 2)
+  struct mapping {
     using extents_type = Extents;
     using size_type = typename extents_type::size_type;
     using index_type = typename extents_type::index_type;
@@ -291,7 +290,8 @@ bool in_bounds(geometry::Cell const& value, std::dextents<std::size_t, 2> bounds
 
 struct layout_vertices {
   template <typename Extents>
-  requires(Extents::rank() == 1) struct mapping {
+    requires(Extents::rank() == 1)
+  struct mapping {
     using extents_type = Extents;
     using size_type = typename extents_type::size_type;
     using index_type = typename extents_type::index_type;
@@ -315,7 +315,7 @@ struct layout_vertices {
           span_size_{[this]() {
             // Compute span size by the maximum index created by the vertices
             index_type max_index = 0;
-            for (const auto& coord : vertices_) {
+            for (auto const& coord : vertices_) {
               auto const index = static_cast<index_type>(coord.x) +
                                  static_cast<index_type>(coord.y) * parent_shape_.extent(1);
               if (index > max_index) {
@@ -356,7 +356,8 @@ struct layout_vertices {
 
 struct layout_raytrace {
   template <typename Extents>
-  requires(Extents::rank() == 1) struct mapping {
+    requires(Extents::rank() == 1)
+  struct mapping {
     using extents_type = Extents;
     using size_type = typename extents_type::size_type;
     using index_type = typename extents_type::index_type;
@@ -384,7 +385,7 @@ struct layout_raytrace {
           span_size_{[this]() {
             // Compute span size by the maximum index created by the vertices
             index_type max_index = 0;
-            for (const auto& coord : rays_) {
+            for (auto const& coord : rays_) {
               auto const index = static_cast<index_type>(coord.x) +
                                  static_cast<index_type>(coord.y) * parent_shape_.extent(1);
               if (index > max_index) {
@@ -425,7 +426,8 @@ struct layout_raytrace {
 
 struct layout_polygonal {
   template <typename Extents>
-  requires(Extents::rank() == 1) struct mapping {
+    requires(Extents::rank() == 1)
+  struct mapping {
     using extents_type = Extents;
     using size_type = typename extents_type::size_type;
     using index_type = typename extents_type::index_type;
@@ -448,7 +450,7 @@ struct layout_polygonal {
           span_size_{[this]() {
             // Compute span size by the maximum index created by the vertices
             index_type max_index = 0;
-            for (const auto& coord : polygon_) {
+            for (auto const& coord : polygon_) {
               auto const index = static_cast<index_type>(coord.x) +
                                  static_cast<index_type>(coord.y) * parent_shape_.extent(1);
               if (index > max_index) {
@@ -677,7 +679,8 @@ struct occupancy_grid_t {
 };
 
 template <typename Container>
-requires(Container::extents_type::rank() == 1) bool is_occupied(Container const& footprint) {
+  requires(Container::extents_type::rank() == 1)
+bool is_occupied(Container const& footprint) {
   for (auto i = 0u; i != footprint.extent(0); i++) {
     if (footprint(i) != 0) {
       return true;
@@ -687,7 +690,8 @@ requires(Container::extents_type::rank() == 1) bool is_occupied(Container const&
 }
 
 template <typename Container>
-requires(Container::extents_type::rank() == 2) bool is_occupied(Container const& footprint) {
+  requires(Container::extents_type::rank() == 2)
+bool is_occupied(Container const& footprint) {
   for (auto i = 0u; i != footprint.extent(0); i++) {
     for (auto j = 0u; j != footprint.extent(1); j++) {
       if (footprint(i, j) != 0) {
@@ -699,16 +703,16 @@ requires(Container::extents_type::rank() == 2) bool is_occupied(Container const&
 }
 
 template <typename Container>
-requires(Container::extents_type::rank() ==
-         1) void set(Container footprint, typename Container::value_type const& value) {
+  requires(Container::extents_type::rank() == 1)
+void set(Container footprint, typename Container::value_type const& value) {
   for (auto i = 0u; i != footprint.extent(0); i++) {
     footprint(i) = value;
   }
 }
 
 template <typename Container>
-requires(Container::extents_type::rank() == 2)  //
-    void set(Container footprint, typename Container::value_type const& value) {
+  requires(Container::extents_type::rank() == 2)  //
+void set(Container footprint, typename Container::value_type const& value) {
   for (auto i = 0u; i != footprint.extent(0); i++) {
     for (auto j = 0u; j != footprint.extent(1); j++) {
       footprint(i, j) = value;

@@ -9,7 +9,9 @@
 #include <ranges>
 #include <string>
 #include <vector>
+#include "json.hpp"
 
+using json = nlohmann::json;
 bool bernoulli_trial(std::uniform_random_bit_generator auto& random_generator, double probability) {
   std::bernoulli_distribution distribution{probability};
   return distribution(random_generator);
@@ -305,6 +307,8 @@ struct rrt_t {
 };
 
 int main() {
+  std::ifstream bin_file{"src/spanny3/config/scenario.json"};
+  json bin_config = json::parse(bin_file);
   // Define parameters
   auto const x_lims = bounds_t{-0.5, 0.5};
   auto const y_lims = bounds_t{-0.5, 0.5};
@@ -324,26 +328,15 @@ int main() {
   auto const context = planning_context_t{x_lims, y_lims, 1000, 0.1, 0.1, obstacles2};
   // Try to generate the RRT until success
   auto rrt = rrt_t(std::random_device{}());
-  int count = 0;
-  while (count < 1) {
-    auto const tree_maybe = rrt(start_node, goal_node, context);
-    if (tree_maybe.has_value()) {
-      std::cout << "Something worked?" << std::endl;
-      auto const& tree = tree_maybe.value();
-      std::cout << "nodes.size() = " << tree.nodes.size() << "\n";
-      for (auto const& node : tree.nodes) {
-        std::cout << node.position.x << ", " << node.position.y << "\n";
-      }
-      break;
+  auto const tree_maybe = rrt(start_node, goal_node, context);
+  if (tree_maybe.has_value()) {
+    std::cout << "Something worked?" << std::endl;
+    auto const& tree = tree_maybe.value();
+    std::cout << "nodes.size() = " << tree.nodes.size() << "\n";
+    for (auto const& node : tree.nodes) {
+      std::cout << node.position.x << ", " << node.position.y << "\n";
     }
-    std::cout << "Retrying...\n";
-    ++count;
+    break;
   }
-  std::cout << count << std::endl;
-  // path = None
-  // if reached_goal_flag:
-  // 	print("Generating path")
-  // 	path = PathGenerator(nodes, edges, start_node[0], goal_node[0])
-
   return 0;
 }

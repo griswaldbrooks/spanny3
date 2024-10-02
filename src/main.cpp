@@ -146,8 +146,7 @@ struct bounds_checked_layout {
         if (((idxs < 0 || idxs >= this->extents().extent(Is)) || ...)) {
           throw std::out_of_range("Invalid bin index");
         }
-      }
-      (std::make_index_sequence<sizeof...(idxs)>{});
+      }(std::make_index_sequence<sizeof...(idxs)>{});
       return this->base_t::operator()(idxs...);
     }
   };
@@ -806,9 +805,8 @@ int main() {
 
   std::array<position_t, 6> bin_positions;
   std::ranges::transform(bin_config["locations"].get<std::vector<std::vector<double>>>(),
-                         bin_positions.begin(), [](auto const& p) {
-                           return position_t{p[0], p[1]};
-                         });
+                         bin_positions.begin(),
+                         [](auto const& p) { return position_t{p[0], p[1]}; });
 
   /* TEST 2x3 mdspan */
   bin_grid_t bin_grid{bin_positions.data()};
@@ -877,16 +875,16 @@ int main() {
 
   /* TEST SINGLE ARM SYNCHRONOUS */
   {
-      // auto arbiter = arbiter_single{left_arm, std::make_unique<mock_hardware>(left_arm)};
-      //   auto arbiter = arbiter_single{left_arm, std::make_unique<hardware>("/dev/ttyACM0",
-      //   9600)}; auto bin_checker = bin_checker_t{&arbiter}; auto bins =
-      //   bin_view_t(bin_positions.data(), {}, bin_checker); for (auto i = 0u; i != bins.extent(0);
-      //   ++i) {
-      //     for (auto j = 0u; j != bins.extent(1); ++j) {
-      //       std::cout << bins(i, j) << "\n";
-      //     }
-      //   }
-      // return 0;
+    // auto arbiter = arbiter_single{left_arm, std::make_unique<mock_hardware>(left_arm)};
+    //   auto arbiter = arbiter_single{left_arm, std::make_unique<hardware>("/dev/ttyACM0",
+    //   9600)}; auto bin_checker = bin_checker_t{&arbiter}; auto bins =
+    //   bin_view_t(bin_positions.data(), {}, bin_checker); for (auto i = 0u; i != bins.extent(0);
+    //   ++i) {
+    //     for (auto j = 0u; j != bins.extent(1); ++j) {
+    //       std::cout << bins(i, j) << "\n";
+    //     }
+    //   }
+    // return 0;
   }  // auto hw = hardware("/dev/ttyACM0", 9600);
   // hw({joint_angles{std::numbers::pi / 2., 0.}});
   // return 0;
