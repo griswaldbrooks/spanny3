@@ -12,6 +12,7 @@
 #include <print>
 #include <random>
 #include <ranges>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -185,7 +186,7 @@ double heuristic(node_t const& node1, node_t const& node2) {
  * @returns `true` if there is an intersection along the line with an obstacle
  */
 bool in_collision(point_like auto const& p1, point_like auto const& p2,
-                  std::vector<circle_t> const& obstacles) {
+                  std::span<circle_t const> obstacles) {
   auto const A = distance_squared(p1, p2);
   return std::ranges::any_of(obstacles, [&](auto const& obstacle) {
     if (distance_between(p1, obstacle) <= obstacle.radius) {
@@ -213,7 +214,7 @@ bool in_collision(point_like auto const& p1, point_like auto const& p2,
   });
 }
 
-bool in_collision(point_like auto const& position, std::vector<circle_t> const& obstacles) {
+bool in_collision(point_like auto const& position, std::span<circle_t const> obstacles) {
   for (auto const& obstacle : obstacles) {
     if (distance_between(obstacle, position) < obstacle.radius) {
       return true;
@@ -246,7 +247,7 @@ std::expected<node_t, std::string> sample_space_or_goal(
 }
 
 std::expected<node_t, std::string> find_neighbor(node_t const& node,
-                                                 std::vector<node_t> const& nodes) {
+                                                 std::span<node_t const> nodes) {
   auto const closest_node = std::ranges::min_element(nodes, [&](auto const& lhs, auto const& rhs) {
     return distance_between(lhs.position, node.position) <
            distance_between(rhs.position, node.position);
