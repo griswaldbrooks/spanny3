@@ -16,7 +16,7 @@ exclude: 'third_party/.*'
 repos:
   # Standard hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.4.0
+    rev: v4.6.0
     hooks:
       - id: check-added-large-files
         args: ['--maxkb=1000']
@@ -29,6 +29,10 @@ repos:
       - id: check-json
       - id: check-executables-have-shebangs
       - id: pretty-format-json
+        args:
+          - "--autofix"
+          - "--indent=2"
+          - "--no-sort-keys"
       - id: check-merge-conflict
       - id: check-symlinks
       - id: check-toml
@@ -50,7 +54,7 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/psf/black
-    rev: 22.3.0
+    rev: 24.8.0
     hooks:
       - id: black
 
@@ -65,7 +69,7 @@ repos:
         args: ['-fallback-style=none', '-i']
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.0.0
+    rev: v2.3.0
     hooks:
       - id: codespell
         args: ['--write-changes', '--ignore-words=.codespell_words']

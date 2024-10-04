@@ -7,33 +7,25 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "(GNU|Clang)")
   add_compile_options(-Werror -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion)
 endif()
 
+# Use Clang's standard library to get more of the C++23 features, std::print, std::mdspan
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+
 add_library(json INTERFACE)
 add_library(nlohmann::json ALIAS json)
 target_include_directories(json INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/nlohmann>)
 target_compile_features(json INTERFACE cxx_std_20)
 
-add_executable(spanny3
-  src/main.cpp
-)
-target_link_libraries(spanny3 PRIVATE serial mdspan expected nlohmann::json)
-target_include_directories(spanny3 INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>)
-target_compile_features(spanny3 INTERFACE cxx_std_20)
+add_library(cxxopts INTERFACE)
+add_library(cxxopts::cxxopts ALIAS cxxopts)
+target_include_directories(cxxopts INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/cxxopts>)
+target_compile_features(cxxopts INTERFACE cxx_std_20)
 
 add_executable(rrt
-  src/rrt2.cpp
+  src/rrt.cpp
 )
-target_link_libraries(rrt PRIVATE mdspan nlohmann::json)
+target_link_libraries(rrt PRIVATE mdspan nlohmann::json cxxopts::cxxopts)
 target_include_directories(rrt PRIVATE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>)
 target_compile_features(rrt PRIVATE cxx_std_23)
-
-find_package(OpenCV REQUIRED)
-
-add_executable(mappy
-  src/map.cpp
-)
-target_link_libraries(mappy PRIVATE serial mdspan expected ${OpenCV_LIBS})
-target_include_directories(mappy INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>)
-target_compile_features(mappy INTERFACE cxx_std_20)
 
 if(NOT PROJECT_IS_TOP_LEVEL)
   return()

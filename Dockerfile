@@ -10,8 +10,22 @@ RUN --mount=type=cache,target=/var/cache/apt,id=apt \
   apt-get update -y && apt-get install -q -y --no-install-recommends \
   build-essential        \
   cmake                  \
+  gpg                    \
+  lsb-release            \
+  software-properties-common \
   wget                   \
   && rm -rf /var/lib/apt/lists/*
+
+# Install clang's standard library to use more C++23 features
+# hadolint ignore=DL3008
+RUN --mount=type=cache,target=/var/cache/apt,id=apt \
+  apt-get update -y && apt-get install -q -y --no-install-recommends \
+  libc++abi-dev \
+  libc++-dev \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install the latest clang to use more C++23 features
+RUN wget https://apt.llvm.org/llvm.sh && chmod u+x llvm.sh && ./llvm.sh 18
 
 # Get library dependencies
 # hadolint ignore=DL3008
@@ -69,6 +83,8 @@ RUN usermod -l $USER ubuntu \
 
 USER $USER
 ENV SHELL /bin/bash
+ENV CC clang-18
+ENV CXX clang++-18
 ENTRYPOINT []
 
 # Setup mixin
