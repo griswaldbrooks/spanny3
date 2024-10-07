@@ -47,7 +47,8 @@ int main(int argc, char** argv) {
   json scenario = json::parse(scenario_file);
   auto const [start, goal, context] = parse(scenario);
 
-  auto rrt = rrt_t(std::random_device{}());
+  auto random_generator = random_context_t{std::random_device{}()};
+  auto rrt = rrt_t{random_generator};
   auto const result = rrt(start, goal, context)
                           .transform([](auto const& tree) {
                             std::ranges::for_each(tree.nodes, [](auto const& node) {

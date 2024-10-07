@@ -6,7 +6,6 @@
 #include <expected>
 #include <mdspan>
 #include <optional>
-#include <random>
 #include <ranges>
 #include <span>
 #include <string>
@@ -119,23 +118,13 @@ std::expected<node_id_t, std::string> expand_tree(planning_context_t const& cont
       });
 }
 
-rrt_t::rrt_t(uint32_t seed) : random_generator_{seed} {}
+random_context_t::random_context_t(uint32_t seed): random_generator_{seed} {}
 
-[[nodiscard]] std::expected<tree_t, std::string> rrt_t::operator()(
-    node_t const& start, node_t const& goal, planning_context_t const& context) {
-  auto tree = tree_t{};
-  tree.nodes.push_back(start);
-  auto const sample_the_space = [&] {
-    return sample_space_or_goal(random_generator_, context, goal);
-  };
-  auto const expand_the_tree = [&](auto const& node) { return expand_tree(context, node, tree); };
-  while (tree.nodes.size() < context.expansion_limit) {
-    auto const id_maybe = sample_the_space().and_then(expand_the_tree);
-    if (id_maybe == goal.id) {
-      // Sort the nodes by node number, for some reason...
-      std::ranges::sort(tree.nodes, {}, &node_t::id);
-      return tree;
-    }
-  }
-  return std::unexpected(std::string{"RRT failed to reach goal"});
+double random_context_t::real_between(double min, double max) {
+  return std::uniform_real_distribution<>{min, max}(random_generator_);
 }
+
+bool random_context_t::yes_maybe(double probability) {
+  return bernoulli_trial(random_generator_, probability);
+}
+
