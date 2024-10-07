@@ -23,15 +23,21 @@ target_compile_features(cxxopts INTERFACE cxx_std_23)
 add_library(rrt SHARED
   src/rrt.cpp
   )
+add_library(spanny::rrt ALIAS rrt)
 target_include_directories(rrt PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>)
 target_compile_features(rrt PRIVATE cxx_std_23)
 
 add_executable(rrt_cli
   src/rrt_cli.cpp
 )
-target_link_libraries(rrt_cli PRIVATE rrt nlohmann::json cxxopts::cxxopts)
+target_link_libraries(rrt_cli PRIVATE spanny::rrt nlohmann::json cxxopts::cxxopts)
 target_compile_features(rrt_cli PRIVATE cxx_std_23)
 
 if(NOT PROJECT_IS_TOP_LEVEL)
   return()
+endif()
+
+include(CTest)
+if(BUILD_TESTING)
+  add_subdirectory(test)
 endif()
