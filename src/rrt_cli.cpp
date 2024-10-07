@@ -1,22 +1,13 @@
 #include "cxxopts.hpp"
 #include "json.hpp"
-#include <algorithm>
-#include <array>
-#include <cmath>
-#include <concepts>
-#include <expected>
+#include "rrt.hpp"
 #include <fstream>
 #include <iostream>
-#include <mdspan>
-#include <optional>
 #include <print>
 #include <random>
 #include <ranges>
-#include <span>
 #include <string>
 #include <vector>
-
-#include "rrt.hpp"
 
 using json = nlohmann::json;
 

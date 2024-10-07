@@ -1,13 +1,9 @@
 #include <algorithm>
-#include <array>
 #include <cmath>
 #include <concepts>
 #include <expected>
-#include <fstream>
-#include <iostream>
 #include <mdspan>
 #include <optional>
-#include <print>
 #include <random>
 #include <ranges>
 #include <span>
@@ -28,7 +24,7 @@ bool bernoulli_trial(std::uniform_random_bit_generator auto& random_generator, d
 
 /**
  * @brief Represents types that behave like a point with x and y coordinates.
- * 
+ *
  * @tparam T is the type to check for point-like properties
  */
 template <typename T>
@@ -41,8 +37,8 @@ concept point_like = requires(T t) {
  * @brief Represents a circle in 2D space.
  */
 struct circle_t {
-  double x; /**< x coordinate of the center */
-  double y; /**< y coordinate of the center */
+  double x;      /**< x coordinate of the center */
+  double y;      /**< y coordinate of the center */
   double radius; /**< radius of the circle */
 };
 
@@ -57,11 +53,11 @@ struct bounds_t {
  * @brief Parameters for the planning algorithm.
  */
 struct planning_context_t {
-  bounds_t x_limits; /**< minimum and maximum x-values of the planning area */
-  bounds_t y_limits; /**< minimum and maximum y-values of the planning area */
-  std::size_t expansion_limit; /**< maximum number of nodes to expand during planning */
-  double sample_distance; /**< fixed distance to project when extending the tree */  
-  double goal_probability; /**< probability of sampling the goal during planning */
+  bounds_t x_limits;               /**< minimum and maximum x-values of the planning area */
+  bounds_t y_limits;               /**< minimum and maximum y-values of the planning area */
+  std::size_t expansion_limit;     /**< maximum number of nodes to expand during planning */
+  double sample_distance;          /**< fixed distance to project when extending the tree */
+  double goal_probability;         /**< probability of sampling the goal during planning */
   std::vector<circle_t> obstacles; /** obstacles to avoid in planning scene */
 };
 
@@ -228,22 +224,21 @@ std::expected<node_t, std::string> sample_space_or_goal(
   return sample_space(random_generator, context);
 }
 
-std::expected<node_t, std::string> find_neighbor(node_t const& node,
-                                                 std::span<node_t const> nodes) ;
+std::expected<node_t, std::string> find_neighbor(node_t const& node, std::span<node_t const> nodes);
 
 node_t project_sample(planning_context_t const& context, node_t const& sampled,
-                      node_t const& closest) ;
+                      node_t const& closest);
 
 std::expected<node_id_t, std::string> expand_tree(planning_context_t const& context,
-                                                  node_t sampled_node, tree_t& tree) ;
+                                                  node_t sampled_node, tree_t& tree);
 
 struct rrt_t {
   explicit rrt_t(uint32_t seed);
 
   [[nodiscard]] std::expected<tree_t, std::string> operator()(node_t const& start,
                                                               node_t const& goal,
-                                                              planning_context_t const& context) ;
+                                                              planning_context_t const& context);
+
  private:
   std::mt19937 random_generator_;
 };
-
