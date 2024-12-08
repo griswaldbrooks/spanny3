@@ -12,8 +12,8 @@
 
 template <typename T>
 concept random_like = requires(T t, double probability, double min, double max) {
-    { t.real_between(min, max) } -> std::convertible_to<double>;
-    { t.yes_maybe(probability) } -> std::convertible_to<bool>;
+  { t.real_between(min, max) } -> std::convertible_to<double>;
+  { t.yes_maybe(probability) } -> std::convertible_to<bool>;
 };
 
 /**
@@ -207,12 +207,10 @@ bool in_collision(point_like auto const& position, std::span<circle_t const> obs
   return false;
 }
 
-namespace stochastic {
-  
-}
+namespace stochastic {}
 
-std::expected<node_t, std::string> sample_space(
-    random_like auto& random_generator, planning_context_t const& context) {
+std::expected<node_t, std::string> sample_space(random_like auto& random_generator,
+                                                planning_context_t const& context) {
   auto x = random_generator.real_between(context.x_limits.min, context.x_limits.max);
   auto y = random_generator.real_between(context.y_limits.min, context.y_limits.max);
   auto const sample_position = position_t{x, y};
@@ -222,9 +220,9 @@ std::expected<node_t, std::string> sample_space(
   return node_t{sample_position};
 }
 
-std::expected<node_t, std::string> sample_space_or_goal(
-    random_like auto& random_generator, planning_context_t const& context,
-    std::optional<node_t> goal_maybe) {
+std::expected<node_t, std::string> sample_space_or_goal(random_like auto& random_generator,
+                                                        planning_context_t const& context,
+                                                        std::optional<node_t> goal_maybe) {
   if (goal_maybe and random_generator.yes_maybe(context.goal_probability)) {
     return goal_maybe.value();
   }
@@ -243,32 +241,36 @@ struct random_context_t {
   explicit random_context_t(uint32_t seed);
   double real_between(double min, double max);
   bool yes_maybe(double probability);
-private:
+
+ private:
   std::mt19937 random_generator_;
 };
 
 template <random_like R>
 struct rrt_t {
-  explicit rrt_t(R& random_generator): random_generator_{random_generator} {}
+  explicit rrt_t(R& random_generator) : random_generator_{random_generator} {}
 
-[[nodiscard]] std::expected<tree_t, std::string> operator()(
-    node_t const& start, node_t const& goal, planning_context_t const& context) {
-  auto tree = tree_t{};
-  tree.nodes.push_back(start);
-  auto const sample_the_space = [&] {
-    return sample_space_or_goal(random_generator_, context, goal);
-  };
-  auto const expand_the_tree = [&](auto const& node) { return expand_tree(context, node, tree); };
-  while (tree.nodes.size() < context.expansion_limit) {
-    auto const id_maybe = sample_the_space().and_then(expand_the_tree);
-    if (id_maybe == goal.id) {
-      // Sort the nodes by node number, for some reason...
-      std::ranges::sort(tree.nodes, {}, &node_t::id);
-      return tree;
+  [[nodiscard]] std::expected<tree_t, std::string> operator()(position_t const& start,
+                                                              position_t const& goal,
+                                                              planning_context_t const& context) {
+    auto tree = tree_t{};
+    tree.nodes.emplace_back(start);
+    auto const goal_node = node_t{goal};
+    auto const sample_the_space = [&] {
+      return sample_space_or_goal(random_generator_, context, goal_node);
+    };
+    auto const expand_the_tree = [&](auto const& node) { return expand_tree(context, node, tree); };
+    while (tree.nodes.size() < context.expansion_limit) {
+      auto const id_maybe = sample_the_space().and_then(expand_the_tree);
+      if (id_maybe == goal_node.id) {
+        // Sort the nodes by node number, for some reason...
+        std::ranges::sort(tree.nodes, {}, &node_t::id);
+        return tree;
+      }
     }
+    return std::unexpected(std::string{"RRT failed to reach goal"});
   }
-  return std::unexpected(std::string{"RRT failed to reach goal"});
-}
+
  private:
   R& random_generator_;
 };

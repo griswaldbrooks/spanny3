@@ -118,7 +118,7 @@ std::expected<node_id_t, std::string> expand_tree(planning_context_t const& cont
       });
 }
 
-random_context_t::random_context_t(uint32_t seed): random_generator_{seed} {}
+random_context_t::random_context_t(uint32_t seed) : random_generator_{seed} {}
 
 double random_context_t::real_between(double min, double max) {
   return std::uniform_real_distribution<>{min, max}(random_generator_);
@@ -127,4 +127,3 @@ double random_context_t::real_between(double min, double max) {
 bool random_context_t::yes_maybe(double probability) {
   return bernoulli_trial(random_generator_, probability);
 }
-

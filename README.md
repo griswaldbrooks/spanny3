@@ -20,7 +20,12 @@ cmake --build build
 
 # run
 ```shell
-username@spanny-dev:~/ws$ ./build/mappy
+./build/rrt_cli
+```
+
+# test
+```shell
+ctest --test-dir build
 ```
 
 # remove orphaned containers

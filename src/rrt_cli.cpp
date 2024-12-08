@@ -12,7 +12,7 @@
 using json = nlohmann::json;
 
 // TODO: Move this to a utility library separate form rrt library
-std::tuple<node_t, node_t, planning_context_t> parse(json const& scenario) {
+std::tuple<position_t, position_t, planning_context_t> parse(json const& scenario) {
   auto obstacles = std::vector<circle_t>{};
   std::ranges::transform(scenario["obstacles"].get<std::vector<std::vector<double>>>(),
                          std::back_inserter(obstacles),
@@ -24,8 +24,8 @@ std::tuple<node_t, node_t, planning_context_t> parse(json const& scenario) {
                          .sample_distance = scenario["sample_distance"],
                          .goal_probability = scenario["goal_probability"],
                          .obstacles = obstacles};
-  auto const start = node_t{position_t{scenario["start"][0], scenario["start"][1]}};
-  auto const goal = node_t{position_t{scenario["goal"][0], scenario["goal"][1]}};
+  auto const start = position_t{scenario["start"][0], scenario["start"][1]};
+  auto const goal = position_t{scenario["goal"][0], scenario["goal"][1]};
   return {start, goal, context};
 }
 
