@@ -32,3 +32,10 @@ ctest --test-dir build
 ```shell
 docker compose -f compose.dev.yml down --remove-orphans
 ```
+
+# start lsp
+```shell
+export PORT=5051
+socat TCP-LISTEN:${PORT},fork,reuseaddr EXEC:"clangd -log=verbose --background-index --path-mappings='/host/path/to/source=/container/path/to/source'"
+
+```

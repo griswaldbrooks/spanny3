@@ -52,12 +52,14 @@ RUN --mount=type=cache,target=/var/cache/apt,id=apt \
   apt-get update && apt-get upgrade -y \
   && apt-get install -q -y --no-install-recommends \
   clang-format \
+  clangd \
   git \
   inkscape \
   neovim \
   python3 \
   python3-pip \
   python-is-python3 \
+  socat \
   sudo \
   ssh \
   vim \

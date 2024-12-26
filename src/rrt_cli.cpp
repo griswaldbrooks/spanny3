@@ -1,6 +1,6 @@
 #include "cxxopts.hpp"
 #include "json.hpp"
-#include "rrt.hpp"
+#include "spanny/rrt.hpp"
 #include <fstream>
 #include <iostream>
 #include <print>
@@ -12,20 +12,20 @@
 using json = nlohmann::json;
 
 // TODO: Move this to a utility library separate form rrt library
-std::tuple<position_t, position_t, planning_context_t> parse(json const& scenario) {
-  auto obstacles = std::vector<circle_t>{};
+std::tuple<spanny::position_t, spanny::position_t, spanny::planning_context_t> parse(json const& scenario) {
+  auto obstacles = std::vector<spanny::circle_t>{};
   std::ranges::transform(scenario["obstacles"].get<std::vector<std::vector<double>>>(),
                          std::back_inserter(obstacles),
-                         [](auto const& c) { return circle_t{c[0], c[1], c[2]}; });
+                         [](auto const& c) { return spanny::circle_t{c[0], c[1], c[2]}; });
   auto const context =
-      planning_context_t{.x_limits = bounds_t{scenario["x_limits"][0], scenario["x_limits"][1]},
-                         .y_limits = bounds_t{scenario["y_limits"][0], scenario["y_limits"][1]},
+      spanny::planning_context_t{.x_limits = spanny::bounds_t{scenario["x_limits"][0], scenario["x_limits"][1]},
+                         .y_limits = spanny::bounds_t{scenario["y_limits"][0], scenario["y_limits"][1]},
                          .expansion_limit = scenario["expansion_limit"],
                          .sample_distance = scenario["sample_distance"],
                          .goal_probability = scenario["goal_probability"],
                          .obstacles = obstacles};
-  auto const start = position_t{scenario["start"][0], scenario["start"][1]};
-  auto const goal = position_t{scenario["goal"][0], scenario["goal"][1]};
+  auto const start = spanny::position_t{scenario["start"][0], scenario["start"][1]};
+  auto const goal = spanny::position_t{scenario["goal"][0], scenario["goal"][1]};
   return {start, goal, context};
 }
 
@@ -47,8 +47,8 @@ int main(int argc, char** argv) {
   json scenario = json::parse(scenario_file);
   auto const [start, goal, context] = parse(scenario);
 
-  auto random_generator = random_context_t{std::random_device{}()};
-  auto rrt = rrt_t{random_generator};
+  auto random_generator = spanny::stochastic::random_context_t{std::random_device{}()};
+  auto rrt = spanny::stochastic::rrt_t{random_generator};
   auto const result = rrt(start, goal, context)
                           .transform([](auto const& tree) {
                             std::ranges::for_each(tree.nodes, [](auto const& node) {

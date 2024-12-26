@@ -1,4 +1,4 @@
-#include "rrt.hpp"
+#include "spanny/rrt.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -10,7 +10,8 @@
 #include <span>
 #include <string>
 #include <vector>
-
+namespace spanny {
+  
 displacement_t operator+(displacement_t const& lhs, displacement_t const& rhs) {
   return {lhs.x + rhs.x, lhs.y + rhs.y};
 }
@@ -80,6 +81,7 @@ double heuristic(node_t const& node1, node_t const& node2) {
   return distance_between(node1.position, node2.position);
 }
 
+namespace stochastic {
 std::expected<node_t, std::string> find_neighbor(node_t const& node,
                                                  std::span<node_t const> nodes) {
   auto const closest_node = std::ranges::min_element(nodes, [&](auto const& lhs, auto const& rhs) {
@@ -97,7 +99,7 @@ node_t project_sample(planning_context_t const& context, node_t const& sampled,
   // If the sampled node is too far from the nearest node,
   // make a closer node in the direction of sampled node
   if (distance_between(closest.position, sampled.position) > context.sample_distance) {
-    return node_t{project(closest.position, sampled.position, context.sample_distance)};
+    return node_t{project_towards(closest.position, sampled.position, context.sample_distance)};
   }
   return sampled;
 }
@@ -127,3 +129,5 @@ double random_context_t::real_between(double min, double max) {
 bool random_context_t::yes_maybe(double probability) {
   return bernoulli_trial(random_generator_, probability);
 }
+} // namespace stochastic
+}//namespace spanny

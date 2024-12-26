@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <cmath>
-#include <concepts>
 #include <expected>
 #include <mdspan>
 #include <optional>
@@ -10,12 +9,10 @@
 #include <string>
 #include <vector>
 
-template <typename T>
-concept random_like = requires(T t, double probability, double min, double max) {
-  { t.real_between(min, max) } -> std::convertible_to<double>;
-  { t.yes_maybe(probability) } -> std::convertible_to<bool>;
-};
+#include "spanny/like.hpp"
 
+namespace spanny {
+  
 /**
  * @brief Perform a Bernoulli trial with a specified probability.
  * https://en.wikipedia.org/wiki/Bernoulli_trial
@@ -27,17 +24,6 @@ bool bernoulli_trial(std::uniform_random_bit_generator auto& random_generator, d
   std::bernoulli_distribution distribution{probability};
   return distribution(random_generator);
 }
-
-/**
- * @brief Represents types that behave like a point with x and y coordinates.
- *
- * @tparam T is the type to check for point-like properties
- */
-template <typename T>
-concept point_like = requires(T t) {
-  { t.x } -> std::convertible_to<double>;
-  { t.y } -> std::convertible_to<double>;
-};
 
 /**
  * @brief Represents a circle in 2D space.
@@ -102,15 +88,20 @@ position_t operator-(position_t const& pos, displacement_t const& disp);
 position_t operator+(position_t const& pos, displacement_t const& disp);
 position_t operator+(displacement_t const& disp, position_t const& pos);
 
+} // namespace spanny
+
+namespace std {
 template <>
-struct std::hash<position_t> {
-  std::size_t operator()(position_t const& point) const noexcept {
+struct std::hash<spanny::position_t> {
+  std::size_t operator()(spanny::position_t const& point) const noexcept {
     auto const h1 = std::hash<double>{}(point.x);
     auto const h2 = std::hash<double>{}(point.y);
     return h1 ^ (h2 << 1);
   }
 };
+} // namespace std
 
+namespace spanny {
 struct node_t {
   explicit node_t(position_t p);
   node_id_t id;
@@ -131,11 +122,11 @@ auto magnitude(displacement_t const& p);
 
 displacement_t normalize(displacement_t const& d);
 
-auto distance_between(point_like auto const& pose1, point_like auto const& pose2) {
+auto distance_between(like::some_point auto const& pose1, like::some_point auto const& pose2) {
   return std::hypot(pose2.x - pose1.x, pose2.y - pose1.y);
 }
 
-auto distance_squared(point_like auto const& pose1, point_like auto const& pose2) {
+auto distance_squared(like::some_point auto const& pose1, like::some_point auto const& pose2) {
   auto const dx = pose2.x - pose1.x;
   auto const dy = pose2.y - pose1.y;
   return dx * dx + dy * dy;
@@ -149,7 +140,7 @@ auto distance_squared(point_like auto const& pose1, point_like auto const& pose2
  * @param distance from origin to project
  * @returns a new point, @p distance away from @p origin in the direction of @p target
  */
-auto project(point_like auto const& origin, point_like auto const& target, double distance) {
+auto project_towards(like::some_point auto const& origin, like::some_point auto const& target, double distance) {
   auto const direction = normalize(target - origin);
   return origin + distance * direction;
 }
@@ -169,7 +160,7 @@ bool is_between(auto const& value, auto const& lo, auto const& hi)
  * @param	obstacles to check for collisions with along the line
  * @returns `true` if there is an intersection along the line with an obstacle
  */
-bool in_collision(point_like auto const& p1, point_like auto const& p2,
+bool in_collision(like::some_point auto const& p1, like::some_point auto const& p2,
                   std::span<circle_t const> obstacles) {
   auto const A = distance_squared(p1, p2);
   return std::ranges::any_of(obstacles, [&](auto const& obstacle) {
@@ -198,7 +189,7 @@ bool in_collision(point_like auto const& p1, point_like auto const& p2,
   });
 }
 
-bool in_collision(point_like auto const& position, std::span<circle_t const> obstacles) {
+bool in_collision(like::some_point auto const& position, std::span<circle_t const> obstacles) {
   for (auto const& obstacle : obstacles) {
     if (distance_between(obstacle, position) < obstacle.radius) {
       return true;
@@ -207,9 +198,10 @@ bool in_collision(point_like auto const& position, std::span<circle_t const> obs
   return false;
 }
 
-namespace stochastic {}
-
-std::expected<node_t, std::string> sample_space(random_like auto& random_generator,
+namespace stochastic { // namespace crazy? probably not a good characterization
+// sketchy
+// dizzy
+std::expected<node_t, std::string> sample_space(like::some_random_generator auto& random_generator,
                                                 planning_context_t const& context) {
   auto x = random_generator.real_between(context.x_limits.min, context.x_limits.max);
   auto y = random_generator.real_between(context.y_limits.min, context.y_limits.max);
@@ -220,7 +212,7 @@ std::expected<node_t, std::string> sample_space(random_like auto& random_generat
   return node_t{sample_position};
 }
 
-std::expected<node_t, std::string> sample_space_or_goal(random_like auto& random_generator,
+std::expected<node_t, std::string> sample_space_or_goal(like::some_random_generator auto& random_generator,
                                                         planning_context_t const& context,
                                                         std::optional<node_t> goal_maybe) {
   if (goal_maybe and random_generator.yes_maybe(context.goal_probability)) {
@@ -246,9 +238,9 @@ struct random_context_t {
   std::mt19937 random_generator_;
 };
 
-template <random_like R>
+template <like::some_random_generator random_generator_t>
 struct rrt_t {
-  explicit rrt_t(R& random_generator) : random_generator_{random_generator} {}
+  explicit rrt_t(random_generator_t& random_generator) : random_generator_{random_generator} {}
 
   [[nodiscard]] std::expected<tree_t, std::string> operator()(position_t const& start,
                                                               position_t const& goal,
@@ -272,5 +264,7 @@ struct rrt_t {
   }
 
  private:
-  R& random_generator_;
+  random_generator_t& random_generator_;
 };
+} // namespace stochastic
+} // namespace spanny
