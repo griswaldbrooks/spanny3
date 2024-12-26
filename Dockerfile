@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM ubuntu:24.04 as upstream
+FROM ubuntu:24.04 AS upstream
 
 # Prevent the interactive wizards from stopping the build
 ARG DEBIAN_FRONTEND=noninteractive
@@ -25,7 +25,7 @@ RUN --mount=type=cache,target=/var/cache/apt,id=apt \
   && rm -rf /var/lib/apt/lists/*
 
 # Install the latest clang to use more C++23 features
-RUN wget https://apt.llvm.org/llvm.sh && chmod u+x llvm.sh && ./llvm.sh 18
+RUN wget --progress=dot:giga https://apt.llvm.org/llvm.sh && chmod u+x llvm.sh && ./llvm.sh 18
 
 # Get library dependencies
 # hadolint ignore=DL3008
@@ -68,7 +68,7 @@ RUN --mount=type=cache,target=/var/cache/apt,id=apt \
 
 # install developer tools
 RUN python3 -m pip install --no-cache-dir --break-system-packages \
-  pre-commit
+  pre-commit==4.0.1
 
 # install hadolint
 RUN wget -q -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-Linux-x86_64 \

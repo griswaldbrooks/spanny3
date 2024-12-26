@@ -1,3 +1,4 @@
+#include "spanny/like.hpp"
 #include <algorithm>
 #include <cmath>
 #include <expected>
@@ -9,10 +10,8 @@
 #include <string>
 #include <vector>
 
-#include "spanny/like.hpp"
-
 namespace spanny {
-  
+
 /**
  * @brief Perform a Bernoulli trial with a specified probability.
  * https://en.wikipedia.org/wiki/Bernoulli_trial
@@ -88,7 +87,7 @@ position_t operator-(position_t const& pos, displacement_t const& disp);
 position_t operator+(position_t const& pos, displacement_t const& disp);
 position_t operator+(displacement_t const& disp, position_t const& pos);
 
-} // namespace spanny
+}  // namespace spanny
 
 namespace std {
 template <>
@@ -99,7 +98,7 @@ struct std::hash<spanny::position_t> {
     return h1 ^ (h2 << 1);
   }
 };
-} // namespace std
+}  // namespace std
 
 namespace spanny {
 struct node_t {
@@ -140,7 +139,8 @@ auto distance_squared(like::some_point auto const& pose1, like::some_point auto 
  * @param distance from origin to project
  * @returns a new point, @p distance away from @p origin in the direction of @p target
  */
-auto project_towards(like::some_point auto const& origin, like::some_point auto const& target, double distance) {
+auto project_towards(like::some_point auto const& origin, like::some_point auto const& target,
+                     double distance) {
   auto const direction = normalize(target - origin);
   return origin + distance * direction;
 }
@@ -198,7 +198,7 @@ bool in_collision(like::some_point auto const& position, std::span<circle_t cons
   return false;
 }
 
-namespace stochastic { // namespace crazy? probably not a good characterization
+namespace stochastic {  // namespace crazy? probably not a good characterization
 // sketchy
 // dizzy
 std::expected<node_t, std::string> sample_space(like::some_random_generator auto& random_generator,
@@ -212,9 +212,9 @@ std::expected<node_t, std::string> sample_space(like::some_random_generator auto
   return node_t{sample_position};
 }
 
-std::expected<node_t, std::string> sample_space_or_goal(like::some_random_generator auto& random_generator,
-                                                        planning_context_t const& context,
-                                                        std::optional<node_t> goal_maybe) {
+std::expected<node_t, std::string> sample_space_or_goal(
+    like::some_random_generator auto& random_generator, planning_context_t const& context,
+    std::optional<node_t> goal_maybe) {
   if (goal_maybe and random_generator.yes_maybe(context.goal_probability)) {
     return goal_maybe.value();
   }
@@ -266,5 +266,5 @@ struct rrt_t {
  private:
   random_generator_t& random_generator_;
 };
-} // namespace stochastic
-} // namespace spanny
+}  // namespace stochastic
+}  // namespace spanny

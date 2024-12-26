@@ -7,7 +7,7 @@ concept some_random_generator = requires(T t, double probability, double min, do
   { t.real_between(min, max) } -> std::convertible_to<double>;
   { t.yes_maybe(probability) } -> std::convertible_to<bool>;
 };
-  
+
 /**
  * @brief Represents types that behave like a point with x and y coordinates.
  *
@@ -19,4 +19,4 @@ concept some_point = requires(T t) {
   { t.y } -> std::convertible_to<double>;
 };
 
-}
+}  // namespace spanny::like

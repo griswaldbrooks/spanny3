@@ -7,7 +7,7 @@
 // Code to test
 #include "spanny/rrt.hpp"
 namespace spanny {
-  
+
 struct mock_random_t {
   MOCK_METHOD(double, real_between, (double min, double max));
   MOCK_METHOD(bool, yes_maybe, (double probability));
@@ -16,7 +16,7 @@ struct mock_random_t {
 TEST(bresenham_conversion, overloaded_function_check) {
   // GIVEN an rrt
   mock_random_t rng;
-  ON_CALL(rng, real_between).WillByDefault([](auto, auto){ return 0.;});
+  ON_CALL(rng, real_between).WillByDefault([](auto, auto) { return 0.; });
   auto rrt = stochastic::rrt_t{rng};
   // no obstacles, don't sample the goal
   // maybe not sampling the goal means it will fail
@@ -34,4 +34,4 @@ TEST(bresenham_conversion, overloaded_function_check) {
   // THEN the two vectors should be the same size and be equal to each other
   EXPECT_TRUE(tree_maybe.has_value()) << tree_maybe.error();
 }
-}//namespace spanny
+}  // namespace spanny

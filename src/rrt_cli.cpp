@@ -12,18 +12,19 @@
 using json = nlohmann::json;
 
 // TODO: Move this to a utility library separate form rrt library
-std::tuple<spanny::position_t, spanny::position_t, spanny::planning_context_t> parse(json const& scenario) {
+std::tuple<spanny::position_t, spanny::position_t, spanny::planning_context_t> parse(
+    json const& scenario) {
   auto obstacles = std::vector<spanny::circle_t>{};
   std::ranges::transform(scenario["obstacles"].get<std::vector<std::vector<double>>>(),
                          std::back_inserter(obstacles),
                          [](auto const& c) { return spanny::circle_t{c[0], c[1], c[2]}; });
-  auto const context =
-      spanny::planning_context_t{.x_limits = spanny::bounds_t{scenario["x_limits"][0], scenario["x_limits"][1]},
-                         .y_limits = spanny::bounds_t{scenario["y_limits"][0], scenario["y_limits"][1]},
-                         .expansion_limit = scenario["expansion_limit"],
-                         .sample_distance = scenario["sample_distance"],
-                         .goal_probability = scenario["goal_probability"],
-                         .obstacles = obstacles};
+  auto const context = spanny::planning_context_t{
+      .x_limits = spanny::bounds_t{scenario["x_limits"][0], scenario["x_limits"][1]},
+      .y_limits = spanny::bounds_t{scenario["y_limits"][0], scenario["y_limits"][1]},
+      .expansion_limit = scenario["expansion_limit"],
+      .sample_distance = scenario["sample_distance"],
+      .goal_probability = scenario["goal_probability"],
+      .obstacles = obstacles};
   auto const start = spanny::position_t{scenario["start"][0], scenario["start"][1]};
   auto const goal = spanny::position_t{scenario["goal"][0], scenario["goal"][1]};
   return {start, goal, context};

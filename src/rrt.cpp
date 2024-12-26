@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 namespace spanny {
-  
+
 displacement_t operator+(displacement_t const& lhs, displacement_t const& rhs) {
   return {lhs.x + rhs.x, lhs.y + rhs.y};
 }
@@ -129,5 +129,5 @@ double random_context_t::real_between(double min, double max) {
 bool random_context_t::yes_maybe(double probability) {
   return bernoulli_trial(random_generator_, probability);
 }
-} // namespace stochastic
-}//namespace spanny
+}  // namespace stochastic
+}  // namespace spanny
