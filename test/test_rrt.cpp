@@ -13,14 +13,12 @@ struct mock_random_t {
   MOCK_METHOD(bool, yes_maybe, (double probability));
 };
 
-TEST(bresenham_conversion, overloaded_function_check) {
-  // GIVEN an rrt
+TEST(TreeGeneration, BadRandom) {
+  // GIVEN a faulty random number generator
   mock_random_t rng;
   ON_CALL(rng, real_between).WillByDefault([](auto, auto) { return 0.; });
-  auto rrt = stochastic::rrt_t{rng};
-  // no obstacles, don't sample the goal
-  // maybe not sampling the goal means it will fail
-  // having a goal so close with a similar sample distance probably means overshoot
+  // WHEN the rrt uses it to plan
+  auto make_random_tree = stochastic::rrt_t{rng};
   planning_context_t context{.x_limits = {-10., 10.},
                              .y_limits = {-10., 10.},
                              .expansion_limit = 1000,
@@ -29,9 +27,8 @@ TEST(bresenham_conversion, overloaded_function_check) {
                              .obstacles = {}};
   auto const start = position_t{0., 0.};
   auto const goal = position_t{1., 1.};
-  // WHEN the pixels are produced via the two bresenham functions
-  auto const tree_maybe = rrt(start, goal, context);
-  // THEN the two vectors should be the same size and be equal to each other
-  EXPECT_TRUE(tree_maybe.has_value()) << tree_maybe.error();
+  auto const tree_maybe = make_random_tree(start, goal, context);
+  // THEN it should fail to reach the goal
+  EXPECT_FALSE(tree_maybe.has_value()) << tree_maybe.error();
 }
 }  // namespace spanny
