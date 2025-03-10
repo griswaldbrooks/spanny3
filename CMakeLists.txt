@@ -33,6 +33,15 @@ add_executable(rrt_cli
 target_link_libraries(rrt_cli PRIVATE spanny::rrt nlohmann::json cxxopts::cxxopts)
 target_compile_features(rrt_cli PRIVATE cxx_std_23)
 
+find_package(Eigen3 REQUIRED)
+add_library(pgo SHARED
+  src/pgo.cpp
+  )
+add_library(spanny::pgo ALIAS pgo)
+target_include_directories(pgo PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>)
+target_link_libraries(pgo PRIVATE Eigen3::Eigen cxxopts::cxxopts)
+target_compile_features(pgo PRIVATE cxx_std_23)
+
 if(NOT PROJECT_IS_TOP_LEVEL)
   return()
 endif()
