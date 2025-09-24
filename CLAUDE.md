@@ -42,6 +42,37 @@ export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development ba
 export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B build && cmake --build build && ctest --test-dir build --output-on-failure && cd src/spanny3 && pre-commit run --all-files"
 ```
 
+## Coverage Commands
+
+### Coverage Build
+Build with coverage instrumentation:
+```bash
+export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B build -DCMAKE_BUILD_TYPE=Coverage && cmake --build build"
+```
+
+### Coverage Analysis
+Run full coverage analysis (build, test, and generate reports):
+```bash
+export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B build -DCMAKE_BUILD_TYPE=Coverage && cmake --build build && cmake --build build --target coverage"
+```
+
+### Coverage Reports Only
+Generate coverage reports from existing profile data:
+```bash
+export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake --build build --target coverage-report"
+```
+
+### Coverage Clean
+Clean coverage data and start fresh:
+```bash
+export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake --build build --target coverage-clean"
+```
+
+### View Coverage Reports
+Access HTML coverage reports (after running coverage analysis):
+- **HTML Report**: Open `build/coverage/reports/html/index.html` in browser
+- **Text Summary**: View `build/coverage/reports/coverage.txt`
+
 ## Hooks Configuration
 
 ### Build Hook
@@ -60,6 +91,12 @@ export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development ba
 Run linting/formatting checks:
 ```bash
 export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cd src/spanny3 && pre-commit run --all-files"
+```
+
+### Coverage Hook
+Run full coverage analysis:
+```bash
+export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B build -DCMAKE_BUILD_TYPE=Coverage && cmake --build build && cmake --build build --target coverage"
 ```
 
 ## Usage Notes
