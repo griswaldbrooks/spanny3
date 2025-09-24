@@ -29,15 +29,26 @@ ctest --test-dir build
 ```
 
 # coverage
-Generate and view code coverage reports:
+Generate and view code coverage reports (run inside development container):
+
+## Quick Coverage Summary
+Build with coverage and view CLI summary:
 ```shell
-export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B build -DCMAKE_BUILD_TYPE=Coverage && cmake --build build && cmake --build build --target coverage"
+cmake -S src/spanny3/ -B build -DCMAKE_BUILD_TYPE=Coverage
+cmake --build build
+cmake --build build --target coverage
+cat build/coverage/reports/coverage.txt
 ```
-View HTML coverage report by opening `build/coverage/reports/html/index.html` in your browser (from within the container), or copy reports to host:
-```shell
-export GID=$(id -g) && docker compose -f compose.dev.yml run --rm -v $(pwd)/coverage-reports:/tmp/reports:rw development bash -c "cmake -S src/spanny3/ -B build -DCMAKE_BUILD_TYPE=Coverage && cmake --build build && cmake --build build --target coverage && sudo cp -r build/coverage/reports/* /tmp/reports/"
-```
-Then open `coverage-reports/html/index.html` in your browser.
+
+## View Coverage in Browser
+Coverage HTML reports are accessible from host since build directory is mounted:
+- **From host**: Open `build/coverage/reports/html/index.html` in your browser
+
+## Individual Coverage Commands
+- **Clean coverage data**: `cmake --build build --target coverage-clean`
+- **Run tests with coverage**: `cmake --build build --target coverage-run`
+- **Generate reports only**: `cmake --build build --target coverage-report`
+- **Full pipeline**: `cmake --build build --target coverage`
 
 # remove orphaned containers
 ```shell
