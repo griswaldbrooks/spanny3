@@ -1,4 +1,4 @@
-[![ci](https://github.com/griswaldbrooks/spanny3/actions/workflows/ci.yml/badge.svg)](https://github.com/griswaldbrooks/spanny3/actions/workflows/ci.yml)
+[![ci](https://github.com/griswaldbrooks/spanny3/actions/workflows/ci.yml/badge.svg)](https://github.com/griswaldbrooks/spanny3/actions/workflows/ci.yml) [![coverage](https://img.shields.io/badge/coverage-report-blue.svg)](https://github.com/griswaldbrooks/spanny3/actions)
 # spanny3
 Robot arm project for CppCon 2024 presentation.
 
@@ -27,6 +27,17 @@ cmake --build build
 ```shell
 ctest --test-dir build
 ```
+
+# coverage
+Generate and view code coverage reports:
+```shell
+export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B build -DCMAKE_BUILD_TYPE=Coverage && cmake --build build && cmake --build build --target coverage"
+```
+View HTML coverage report by opening `build/coverage/reports/html/index.html` in your browser (from within the container), or copy reports to host:
+```shell
+export GID=$(id -g) && docker compose -f compose.dev.yml run --rm -v $(pwd)/coverage-reports:/tmp/reports:rw development bash -c "cmake -S src/spanny3/ -B build -DCMAKE_BUILD_TYPE=Coverage && cmake --build build && cmake --build build --target coverage && sudo cp -r build/coverage/reports/* /tmp/reports/"
+```
+Then open `coverage-reports/html/index.html` in your browser.
 
 # remove orphaned containers
 ```shell

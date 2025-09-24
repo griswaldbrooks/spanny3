@@ -36,3 +36,39 @@ jobs:
 
     - name: Test
       run: ctest --test-dir build --output-on-failure --build-config ${{matrix.config.name}}
+
+  coverage:
+    name: Coverage Analysis
+    runs-on: ubuntu-latest
+    container: ghcr.io/griswaldbrooks/spanny3:upstream
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Configure Coverage Build
+      env:
+        CC: clang-18
+        CXX: clang++-18
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Coverage -DCMAKE_CXX_FLAGS="-stdlib=libc++"
+
+    - name: Build with Coverage
+      run: cmake --build build --config Coverage
+
+    - name: Run Coverage Analysis
+      run: cmake --build build --target coverage
+
+    - name: Upload Coverage Reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-reports
+        path: |
+          build/coverage/reports/
+        retention-days: 30
+
+    - name: Display Coverage Summary
+      run: |
+        echo "## Coverage Summary" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        cat build/coverage/reports/coverage.txt >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY

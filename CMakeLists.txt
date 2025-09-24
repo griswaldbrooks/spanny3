@@ -10,6 +10,14 @@ endif()
 # Use Clang's standard library to get more of the C++23 features, std::print, std::mdspan
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 
+# Coverage configuration
+if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
+  message(STATUS "Building with coverage instrumentation")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fprofile-instr-generate")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fprofile-instr-generate")
+endif()
+
 add_library(json INTERFACE)
 add_library(nlohmann::json ALIAS json)
 target_include_directories(json INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/third_party/nlohmann>)
@@ -40,4 +48,51 @@ endif()
 include(CTest)
 if(BUILD_TESTING)
   add_subdirectory(test)
+endif()
+
+# Coverage targets
+if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
+  find_program(LLVM_COV_PATH NAMES llvm-cov-18 llvm-cov REQUIRED)
+  find_program(LLVM_PROFDATA_PATH NAMES llvm-profdata-18 llvm-profdata REQUIRED)
+
+  add_custom_target(coverage-clean
+    COMMAND ${CMAKE_COMMAND} -E remove_directory ${PROJECT_BINARY_DIR}/coverage
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/coverage/profiles
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/coverage/reports
+    COMMENT "Cleaning coverage data"
+  )
+
+  add_custom_target(coverage-run
+    COMMAND ${CMAKE_COMMAND} -E env LLVM_PROFILE_FILE=${PROJECT_BINARY_DIR}/coverage/profiles/test_%p.profraw
+            ${CMAKE_CTEST_COMMAND} --output-on-failure
+    DEPENDS test_rrt
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+    COMMENT "Running tests with coverage collection"
+  )
+
+  add_custom_target(coverage-merge
+    COMMAND ${LLVM_PROFDATA_PATH} merge -sparse
+            ${PROJECT_BINARY_DIR}/coverage/profiles/*.profraw
+            -o ${PROJECT_BINARY_DIR}/coverage/merged.profdata
+    DEPENDS coverage-run
+    COMMENT "Merging coverage profiles"
+  )
+
+  add_custom_target(coverage-report
+    COMMAND ${LLVM_COV_PATH} show $<TARGET_FILE:test_rrt>
+            -instr-profile=${PROJECT_BINARY_DIR}/coverage/merged.profdata
+            -format=html -output-dir=${PROJECT_BINARY_DIR}/coverage/reports/html
+            -ignore-filename-regex '.*(third_party|test).*'
+    COMMAND ${LLVM_COV_PATH} report $<TARGET_FILE:test_rrt>
+            -instr-profile=${PROJECT_BINARY_DIR}/coverage/merged.profdata
+            -ignore-filename-regex '.*(third_party|test).*'
+            > ${PROJECT_BINARY_DIR}/coverage/reports/coverage.txt
+    DEPENDS coverage-merge
+    COMMENT "Generating coverage reports"
+  )
+
+  add_custom_target(coverage
+    DEPENDS coverage-report
+    COMMENT "Full coverage analysis pipeline"
+  )
 endif()

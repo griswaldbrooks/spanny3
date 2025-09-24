@@ -1,2 +1,6 @@
 **/elsie-cache/
 build
+
+# Coverage files
+*.profraw
+*.profdata
