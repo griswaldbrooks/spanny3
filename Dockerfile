@@ -90,3 +90,7 @@ ENTRYPOINT []
 
 # Setup mixin
 WORKDIR /home/${USER}/ws
+
+# Pre-create volume mount directories with correct ownership
+RUN mkdir -p /home/${USER}/ws/artifacts /home/${USER}/ws/src /home/${USER}/.cache/pre-commit \
+    && chown -R $UID:$GID /home/${USER}/ws /home/${USER}/.cache
