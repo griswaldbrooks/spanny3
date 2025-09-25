@@ -1,16 +1,13 @@
-version: '3.8'
-
 services:
   development:
     build:
       args:
-        UID: ${UID}
-        GID: ${GID}
+        UID: ${USER_UID:-1000}
+        GID: ${USER_GID:-1000}
         USER: ${USER}
       context: .
       dockerfile: Dockerfile
-    command: bash -c "export PATH="/usr/lib/ccache:$PATH" &&
-                      bash"
+    command: bash
     container_name: ${USER}-${REPO}-dev
     environment:
       - TERM=xterm-256color
@@ -25,7 +22,7 @@ services:
       - ~/.ssh:${HOME}/.ssh:ro
       - ~/.gitconfig:${HOME}/.gitconfig:ro
       - ${PWD}:${HOME}/ws/src/${REPO}
-      - ~/.${REPO}/ccache:${HOME}/.ccache
+      - ~/.${REPO}:${HOME}/ws/artifacts
       - /etc/group:/etc/group:ro
       - /etc/passwd:/etc/passwd:ro
       - /etc/shadow:/etc/shadow:ro

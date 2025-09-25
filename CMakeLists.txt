@@ -16,6 +16,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fprofile-instr-generate")
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fprofile-instr-generate")
+
+  # Create a list to track all project libraries for coverage
+  set(PROJECT_LIBRARIES "" CACHE INTERNAL "List of project libraries for coverage")
 endif()
 
 add_library(json INTERFACE)
@@ -34,6 +37,11 @@ add_library(rrt SHARED
 add_library(spanny::rrt ALIAS rrt)
 target_include_directories(rrt PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>)
 target_compile_features(rrt PRIVATE cxx_std_23)
+
+# Add to project libraries list for coverage
+if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
+  set(PROJECT_LIBRARIES "${PROJECT_LIBRARIES};rrt" CACHE INTERNAL "List of project libraries for coverage")
+endif()
 
 add_executable(rrt_cli
   src/rrt_cli.cpp
@@ -78,14 +86,24 @@ if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
     COMMENT "Merging coverage profiles"
   )
 
+  # Generate object file arguments for all project libraries
+  set(COVERAGE_OBJECTS "")
+  foreach(lib ${PROJECT_LIBRARIES})
+    list(APPEND COVERAGE_OBJECTS -object $<TARGET_FILE:${lib}>)
+  endforeach()
+
   add_custom_target(coverage-report
     COMMAND ${LLVM_COV_PATH} show $<TARGET_FILE:test_rrt>
+            ${COVERAGE_OBJECTS}
             -instr-profile=${PROJECT_BINARY_DIR}/coverage/merged.profdata
             -format=html -output-dir=${PROJECT_BINARY_DIR}/coverage/reports/html
-            -ignore-filename-regex '.*(third_party|test).*'
+            -ignore-filename-regex '.*(third_party|test|_deps|build).*'
+            ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/include
     COMMAND ${LLVM_COV_PATH} report $<TARGET_FILE:test_rrt>
+            ${COVERAGE_OBJECTS}
             -instr-profile=${PROJECT_BINARY_DIR}/coverage/merged.profdata
-            -ignore-filename-regex '.*(third_party|test).*'
+            -ignore-filename-regex '.*(third_party|test|_deps|build).*'
+            ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/include
             > ${PROJECT_BINARY_DIR}/coverage/reports/coverage.txt
     DEPENDS coverage-merge
     COMMENT "Generating coverage reports"
