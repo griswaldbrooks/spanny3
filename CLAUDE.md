@@ -4,6 +4,24 @@
 
 Spanny3 is a **C++ robotics project** implementing a **Rapidly-Exploring Random Tree (RRT)** path planning algorithm. Created for a CppCon 2024 presentation, it demonstrates modern C++23 features in a practical robotics context.
 
+## Docker Development Philosophy
+
+This project follows a **Docker-native development approach** with these principles:
+
+### Core Philosophy
+- **Pure Docker Compose**: No wrapper scripts, aliases, or Makefiles
+- **Manual UID/GID Export**: Explicit and transparent (Docker has no native alternative)
+- **Proper File Ownership**: Container user matches host user for seamless development
+- **Enhanced Security**: Minimal privileges instead of broad `privileged: true`
+- **Persistent Caches**: Build artifacts survive container restarts
+
+### Compose File Structure
+- **Single compose file**: `compose.improved.yml` for development
+- **Named project**: `name: spanny3-dev` prevents container conflicts
+- **External networking**: Custom bridge network instead of host mode
+- **Volume management**: Named volumes for artifacts and caches
+- **Security hardening**: Specific capabilities only when needed
+
 ### Key Components
 - **Path Planning Engine** (`src/rrt.cpp`, `include/spanny/rrt.hpp`): Core RRT algorithm with C++23 features
 - **CLI Tool** (`src/rrt_cli.cpp`): Command-line interface for running path planning scenarios
@@ -22,81 +40,114 @@ Spanny3 is a **C++ robotics project** implementing a **Rapidly-Exploring Random 
 - **GoogleTest/GoogleMock**: Testing framework
 - **Pre-commit**: Code formatting and linting
 
-## Build Commands
+## Development Workflow Commands
+
+### Container Setup
+Start the development environment:
 ```bash
-export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B artifacts/build && cmake --build artifacts/build"
+export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.improved.yml run --rm development
 ```
 
-## Test Commands
+### Build Commands (inside container)
 ```bash
-export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B artifacts/build && cmake --build artifacts/build && ctest --test-dir artifacts/build --output-on-failure"
+cd src/spanny3
+cmake -S . -B ../../artifacts/build && cmake --build ../../artifacts/build
 ```
 
-## Lint Commands
+### Test Commands (inside container)
 ```bash
-export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cd src/spanny3 && pre-commit run --all-files"
+ctest --test-dir artifacts/build --output-on-failure
 ```
 
-## Combined Build, Test, and Lint
+### Lint Commands (inside container)
 ```bash
-export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B artifacts/build && cmake --build artifacts/build && ctest --test-dir artifacts/build --output-on-failure && cd src/spanny3 && pre-commit run --all-files"
+cd src/spanny3 && pre-commit run --all-files
+```
+
+### One-Shot Commands (from host)
+For automation or CI-like workflows:
+
+**Build:**
+```bash
+export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.improved.yml run --rm development bash -c "cd src/spanny3 && cmake -S . -B ../../artifacts/build && cmake --build ../../artifacts/build"
+```
+
+**Test:**
+```bash
+export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.improved.yml run --rm development bash -c "ctest --test-dir artifacts/build --output-on-failure"
+```
+
+**Lint:**
+```bash
+export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.improved.yml run --rm development bash -c "cd src/spanny3 && pre-commit run --all-files"
+```
+
+**Combined Pipeline:**
+```bash
+export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.improved.yml run --rm development bash -c "cd src/spanny3 && cmake -S . -B ../../artifacts/build && cmake --build ../../artifacts/build && ctest --test-dir ../../artifacts/build --output-on-failure && pre-commit run --all-files"
 ```
 
 ## Coverage Commands
 
-### Coverage Build
-Build with coverage instrumentation:
+### Coverage Build (inside container)
 ```bash
-export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B artifacts/build -DCMAKE_BUILD_TYPE=Coverage && cmake --build artifacts/build"
+cd src/spanny3
+cmake -S . -B ../../artifacts/build -DCMAKE_BUILD_TYPE=Coverage && cmake --build ../../artifacts/build
 ```
 
-### Coverage Analysis
+### Coverage Analysis (inside container)
 Run full coverage analysis (build, test, and generate reports):
 ```bash
-export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B artifacts/build -DCMAKE_BUILD_TYPE=Coverage && cmake --build artifacts/build && cmake --build artifacts/build --target coverage"
+cmake --build ../../artifacts/build --target coverage
 ```
 
-### Coverage Reports Only
+### Coverage Reports Only (inside container)
 Generate coverage reports from existing profile data:
 ```bash
-export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake --build artifacts/build --target coverage-report"
+cmake --build ../../artifacts/build --target coverage-report
 ```
 
-### Coverage Clean
+### Coverage Clean (inside container)
 Clean coverage data and start fresh:
 ```bash
-export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake --build artifacts/build --target coverage-clean"
+cmake --build ../../artifacts/build --target coverage-clean
+```
+
+### One-Shot Coverage (from host)
+Full coverage pipeline:
+```bash
+export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.improved.yml run --rm development bash -c "cd src/spanny3 && cmake -S . -B ../../artifacts/build -DCMAKE_BUILD_TYPE=Coverage && cmake --build ../../artifacts/build && cmake --build ../../artifacts/build --target coverage"
 ```
 
 ### View Coverage Reports
-Access HTML coverage reports (after running coverage analysis):
-- **HTML Report**: Open `~/.spanny3/build/coverage/reports/html/index.html` in browser
-- **Text Summary**: View `~/.spanny3/build/coverage/reports/coverage.txt`
+Access coverage reports after running coverage analysis:
+- **HTML Report**: Open `artifacts/build/coverage/reports/html/index.html` in browser
+- **Text Summary**: View `artifacts/build/coverage/reports/coverage.txt`
 
 ## Hooks Configuration
 
 ### Build Hook
 Automatically run build after code changes:
 ```bash
-export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B artifacts/build && cmake --build artifacts/build"
+export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.improved.yml run --rm development bash -c "cd src/spanny3 && cmake -S . -B ../../artifacts/build && cmake --build ../../artifacts/build"
 ```
 
 ### Test Hook
 Run tests after successful builds:
 ```bash
-export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B artifacts/build && cmake --build artifacts/build && ctest --test-dir artifacts/build --output-on-failure"
+export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.improved.yml run --rm development bash -c "cd src/spanny3 && cmake -S . -B ../../artifacts/build && cmake --build ../../artifacts/build && ctest --test-dir ../../artifacts/build --output-on-failure"
 ```
 
 ### Lint Hook
 Run linting/formatting checks:
 ```bash
-export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cd src/spanny3 && pre-commit run --all-files"
+export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.improved.yml run --rm development bash -c "cd src/spanny3 && pre-commit run --all-files"
 ```
 
 ### Coverage Hook
 Run full coverage analysis:
 ```bash
-export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B artifacts/build -DCMAKE_BUILD_TYPE=Coverage && cmake --build artifacts/build && cmake --build artifacts/build --target coverage"
+export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.improved.yml run --rm development bash -c "cd src/spanny3 && cmake -S . -B ../../artifacts/build -DCMAKE_BUILD_TYPE=Coverage && cmake --build ../../artifacts/build && cmake --build ../../artifacts/build --target coverage"
 ```
 
 ## Usage Notes
@@ -104,12 +155,15 @@ export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compos
 - **Build System**: CMake with modern target management
 - **Testing**: CTest with GoogleTest/GoogleMock framework
 - **Code Quality**: Pre-commit hooks with clang-format, codespell, and other tools
-- **Development Environment**: Docker containerized development via `compose.dev.yml`
-- **Container Structure**: Project mounted at `/home/griswald/ws/src/spanny3/` in container
+- **Development Environment**: Docker containerized development via `compose.improved.yml`
+- **Container Structure**:
+  - Project root: `/home/${USER}/ws/src/spanny3/`
+  - Build artifacts: `/home/${USER}/ws/artifacts/`
+  - All files owned by container user (matches host user)
 - **Key Files**:
   - `config/scenario.json`: Default planning scenario with obstacles
-  - `src/spanny3/`: CMake project root in container
-  - `build/`: Build output directory (created during build process)
+  - `compose.improved.yml`: Docker Compose configuration for development
+  - `artifacts/build/`: Build output directory (persistent volume)
 
 ## Architecture Notes for Agents
 - **Error Handling**: Uses `std::expected<T, std::string>` throughout for recoverable errors

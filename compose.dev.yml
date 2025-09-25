@@ -1,29 +1,60 @@
+name: spanny3-dev
+
 services:
   development:
     build:
       args:
-        UID: ${USER_UID:-1000}
-        GID: ${USER_GID:-1000}
+        # Manual UID/GID export required (Docker-native limitation)
+        # Usage: export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.improved.yml run --rm development
+        UID: ${USER_UID}
+        GID: ${USER_GID}
         USER: ${USER}
       context: .
       dockerfile: Dockerfile
+      target: development
     command: bash
-    container_name: ${USER}-${REPO}-dev
+    container_name: ${USER}-spanny3-dev
     environment:
       - TERM=xterm-256color
-    extra_hosts:
-      - ${REPO}-dev:127.0.0.1
-    hostname: ${REPO}-dev
-    image: ${REPO}-dev:latest
-    network_mode: host
-    privileged: true
+    hostname: spanny3-dev
+    image: spanny3-dev:latest
+
+    # Improved security - reduced privileges
+    privileged: false
+    cap_add:
+      - SYS_PTRACE  # Only if debugging with gdb/lldb needed
+    security_opt:
+      - seccomp:unconfined  # Only if debugging tools require it
+
+    # Custom network for better isolation than host mode
+    networks:
+      - spanny-dev
+    ports:
+      - "5051:5051"  # For LSP server if needed
+
     volumes:
-      - /dev:/dev
-      - ~/.ssh:${HOME}/.ssh:ro
-      - ~/.gitconfig:${HOME}/.gitconfig:ro
-      - ${PWD}:${HOME}/ws/src/${REPO}
-      - ~/.${REPO}:${HOME}/ws/artifacts
+      # Essential development mounts
+      - ~/.ssh:/home/${USER}/.ssh:ro
+      - ~/.gitconfig:/home/${USER}/.gitconfig:ro
+      - ${PWD}:/home/${USER}/ws/src/spanny3
+
+      # Persistent caches for better performance
+      - spanny3-artifacts:/home/${USER}/ws/artifacts
+      - spanny3-pre-commit:/home/${USER}/.cache/pre-commit
+
+      # System integration (minimal required)
       - /etc/group:/etc/group:ro
       - /etc/passwd:/etc/passwd:ro
-      - /etc/shadow:/etc/shadow:ro
-    working_dir: ${HOME}/ws
+
+    working_dir: /home/${USER}/ws
+
+networks:
+  spanny-dev:
+    driver: bridge
+    name: spanny3-dev-network
+
+volumes:
+  spanny3-artifacts:
+    name: ${USER}-spanny3-artifacts
+  spanny3-pre-commit:
+    name: ${USER}-spanny3-precommit
