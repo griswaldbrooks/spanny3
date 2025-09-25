@@ -5,8 +5,8 @@ Robot arm project for CppCon 2024 presentation.
 # development container
 Build a new development image
 ```shell
-mkdir -p ~/.spanny3/ccache
-export UID=$(id -u) export GID=$(id -g); docker compose -f compose.dev.yml build
+mkdir -p ~/.spanny3
+export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml build
 ```
 Start an interactive development container
 ```shell
@@ -14,18 +14,18 @@ docker compose -f compose.dev.yml run development
 ```
 Build the repository in the container
 ```shell
-cmake -S src/spanny3/ -B build
-cmake --build build
+cmake -S src/spanny3/ -B artifacts/build
+cmake --build artifacts/build
 ```
 
 # run
 ```shell
-./build/rrt_cli
+./artifacts/build/rrt_cli
 ```
 
 # test
 ```shell
-ctest --test-dir build
+ctest --test-dir artifacts/build
 ```
 
 # coverage
@@ -34,21 +34,35 @@ Generate and view code coverage reports (run inside development container):
 ## Quick Coverage Summary
 Build with coverage and view CLI summary:
 ```shell
-cmake -S src/spanny3/ -B build -DCMAKE_BUILD_TYPE=Coverage
-cmake --build build
-cmake --build build --target coverage
-cat build/coverage/reports/coverage.txt
+cmake -S src/spanny3/ -B artifacts/build -DCMAKE_BUILD_TYPE=Coverage
+cmake --build artifacts/build
+cmake --build artifacts/build --target coverage
+cat artifacts/build/coverage/reports/coverage.txt
 ```
 
 ## View Coverage in Browser
-Coverage HTML reports are accessible from host since build directory is mounted:
-- **From host**: Open `build/coverage/reports/html/index.html` in your browser
+Coverage HTML reports are accessible from host since artifacts directory is mounted:
+- **From host**: Open `~/.spanny3/build/coverage/reports/html/index.html` in your browser
 
 ## Individual Coverage Commands
-- **Clean coverage data**: `cmake --build build --target coverage-clean`
-- **Run tests with coverage**: `cmake --build build --target coverage-run`
-- **Generate reports only**: `cmake --build build --target coverage-report`
-- **Full pipeline**: `cmake --build build --target coverage`
+- **Clean coverage data**: `cmake --build artifacts/build --target coverage-clean`
+- **Run tests with coverage**: `cmake --build artifacts/build --target coverage-run`
+- **Generate reports only**: `cmake --build artifacts/build --target coverage-report`
+- **Full pipeline**: `cmake --build artifacts/build --target coverage`
+
+## Adding New Libraries for Coverage
+When adding new project libraries, include them in coverage by adding this block:
+```cmake
+add_library(my_new_lib SHARED
+  src/my_new_lib.cpp
+)
+
+# Add to project libraries list for coverage
+if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
+  set(PROJECT_LIBRARIES "${PROJECT_LIBRARIES};my_new_lib" CACHE INTERNAL "List of project libraries for coverage")
+endif()
+```
+The library will automatically be included in coverage reports with no changes to coverage commands.
 
 # remove orphaned containers
 ```shell

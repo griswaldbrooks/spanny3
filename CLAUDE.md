@@ -24,22 +24,22 @@ Spanny3 is a **C++ robotics project** implementing a **Rapidly-Exploring Random 
 
 ## Build Commands
 ```bash
-export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B build && cmake --build build"
+export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B artifacts/build && cmake --build artifacts/build"
 ```
 
 ## Test Commands
 ```bash
-export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B build && cmake --build build && ctest --test-dir build --output-on-failure"
+export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B artifacts/build && cmake --build artifacts/build && ctest --test-dir artifacts/build --output-on-failure"
 ```
 
 ## Lint Commands
 ```bash
-export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cd src/spanny3 && pre-commit run --all-files"
+export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cd src/spanny3 && pre-commit run --all-files"
 ```
 
 ## Combined Build, Test, and Lint
 ```bash
-export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B build && cmake --build build && ctest --test-dir build --output-on-failure && cd src/spanny3 && pre-commit run --all-files"
+export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B artifacts/build && cmake --build artifacts/build && ctest --test-dir artifacts/build --output-on-failure && cd src/spanny3 && pre-commit run --all-files"
 ```
 
 ## Coverage Commands
@@ -47,56 +47,56 @@ export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development ba
 ### Coverage Build
 Build with coverage instrumentation:
 ```bash
-export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B build -DCMAKE_BUILD_TYPE=Coverage && cmake --build build"
+export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B artifacts/build -DCMAKE_BUILD_TYPE=Coverage && cmake --build artifacts/build"
 ```
 
 ### Coverage Analysis
 Run full coverage analysis (build, test, and generate reports):
 ```bash
-export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B build -DCMAKE_BUILD_TYPE=Coverage && cmake --build build && cmake --build build --target coverage"
+export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B artifacts/build -DCMAKE_BUILD_TYPE=Coverage && cmake --build artifacts/build && cmake --build artifacts/build --target coverage"
 ```
 
 ### Coverage Reports Only
 Generate coverage reports from existing profile data:
 ```bash
-export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake --build build --target coverage-report"
+export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake --build artifacts/build --target coverage-report"
 ```
 
 ### Coverage Clean
 Clean coverage data and start fresh:
 ```bash
-export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake --build build --target coverage-clean"
+export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake --build artifacts/build --target coverage-clean"
 ```
 
 ### View Coverage Reports
 Access HTML coverage reports (after running coverage analysis):
-- **HTML Report**: Open `build/coverage/reports/html/index.html` in browser
-- **Text Summary**: View `build/coverage/reports/coverage.txt`
+- **HTML Report**: Open `~/.spanny3/build/coverage/reports/html/index.html` in browser
+- **Text Summary**: View `~/.spanny3/build/coverage/reports/coverage.txt`
 
 ## Hooks Configuration
 
 ### Build Hook
 Automatically run build after code changes:
 ```bash
-export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B build && cmake --build build"
+export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B artifacts/build && cmake --build artifacts/build"
 ```
 
 ### Test Hook
 Run tests after successful builds:
 ```bash
-export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B build && cmake --build build && ctest --test-dir build --output-on-failure"
+export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B artifacts/build && cmake --build artifacts/build && ctest --test-dir artifacts/build --output-on-failure"
 ```
 
 ### Lint Hook
 Run linting/formatting checks:
 ```bash
-export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cd src/spanny3 && pre-commit run --all-files"
+export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cd src/spanny3 && pre-commit run --all-files"
 ```
 
 ### Coverage Hook
 Run full coverage analysis:
 ```bash
-export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B build -DCMAKE_BUILD_TYPE=Coverage && cmake --build build && cmake --build build --target coverage"
+export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development bash -c "cmake -S src/spanny3/ -B artifacts/build -DCMAKE_BUILD_TYPE=Coverage && cmake --build artifacts/build && cmake --build artifacts/build --target coverage"
 ```
 
 ## Usage Notes
@@ -117,3 +117,13 @@ export GID=$(id -g) && docker compose -f compose.dev.yml run --rm development ba
 - **Testing Strategy**: Mock random generators for deterministic testing of stochastic algorithms
 - **Collision Detection**: Line-circle intersection using quadratic equation solving
 - **Path Planning**: RRT with configurable sampling distance, goal probability, and expansion limits
+
+## Adding New Libraries
+When adding new project libraries, include them in coverage by adding this block after the library definition:
+```cmake
+# Add to project libraries list for coverage
+if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
+  set(PROJECT_LIBRARIES "${PROJECT_LIBRARIES};library_name" CACHE INTERNAL "List of project libraries for coverage")
+endif()
+```
+The library will automatically be included in coverage reports. Coverage is filtered to show only project code (excludes third_party, test, build artifacts).
