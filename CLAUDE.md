@@ -134,16 +134,20 @@ pixi run dev
 - **Code Quality**: Pre-commit hooks with clang-format, codespell, and other tools
 - **Development Environment**:
   - **Pixi**: Cross-platform package manager for local development and CI/CD (Linux and macOS)
+  - **No Docker**: Docker workflow was removed in favor of Pixi-only approach
 - **Pixi Structure**:
   - Project root: Current directory
   - Build artifacts: `build/` directory
   - Environment: `.pixi/` (auto-managed, git-ignored)
+  - Lock file: `pixi.lock` (committed to repo for reproducible CI builds)
   - Platform-specific: Linux requires libcxx/libcxxabi/compiler-rt; macOS uses system libc++
 - **Key Files**:
   - `pixi.toml`: Pixi configuration with dependencies and tasks
+  - `pixi.lock`: Lock file for reproducible dependency versions (must be committed)
   - `CMakePresets.json`: CMake presets for different build configurations
   - `config/scenario.json`: Default planning scenario with obstacles
   - `build/`: Build output directory
+  - `.github/workflows/ci.yml`: CI/CD using Pixi on Linux and macOS
 
 ## Architecture Notes for Agents
 - **Error Handling**: Uses `std::expected<T, std::string>` throughout for recoverable errors
@@ -151,6 +155,24 @@ pixi run dev
 - **Testing Strategy**: Mock random generators for deterministic testing of stochastic algorithms
 - **Collision Detection**: Line-circle intersection using quadratic equation solving
 - **Path Planning**: RRT with configurable sampling distance, goal probability, and expansion limits
+
+## Known Issues and Next Steps
+
+See [IMPROVEMENT_PLAN.md](IMPROVEMENT_PLAN.md) for detailed roadmap. Priority items:
+
+### Critical Bug (src/rrt.cpp:118)
+Edge relationship is reversed - `tree.edges.emplace_back(sample.id, closest.id, cost)` should be `tree.edges.emplace_back(closest.id, sample.id, cost)` for correct parent-child relationship.
+
+### Missing Functionality
+- Path extraction functionality not implemented (tree is generated but path is not extracted)
+- CLI uses hardcoded container path instead of relative path
+
+### CI/CD Notes
+- CI runs on Linux and macOS (ARM64 & x64) using Pixi
+- Three jobs: build (6 configs), coverage (Linux only), lint
+- All commands: `pixi run dev`, `pixi run coverage`, `pixi run lint`
+- If Pixi version changes locally, may need to update CI to match
+- Always commit `pixi.lock` after dependency changes
 
 ## Adding New Libraries
 When adding new project libraries, include them in coverage by adding this block after the library definition:
