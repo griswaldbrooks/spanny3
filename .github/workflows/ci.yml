@@ -4,59 +4,48 @@ on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build:
-    name: ${{matrix.platform.name}} ${{matrix.type.name}} ${{matrix.config.name}}
+    name: ${{matrix.platform.name}} ${{matrix.config.name}}
     runs-on: ${{matrix.platform.os}}
-    container: ghcr.io/griswaldbrooks/spanny3:upstream
     strategy:
       fail-fast: false
       matrix:
         platform:
-        - { name: Linux,   os: ubuntu-latest }
-        compiler:
-        - { name: Clang, cc: clang-18, cxx: clang++-18, flags: "-stdlib=libc++" }
-        type:
-        - { name: Shared, flags: "ON" }
-        - { name: Static, flags: "OFF" }
+        - { name: Linux, os: ubuntu-latest }
+        - { name: macOS-ARM64, os: macos-14 }
+        - { name: macOS-x64, os: macos-13 }
         config:
         - { name: Debug }
         - { name: Release }
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
-    - name: Configure
-      env:
-        CC: ${{ matrix.compiler.cc }}
-        CXX: ${{ matrix.compiler.cxx }}
-      run: cmake -B build -DBUILD_SHARED_LIBS=${{matrix.type.flags}} -DCMAKE_BUILD_TYPE=${{matrix.config.name}} -DCMAKE_CXX_FLAGS=${{matrix.compiler.flags}}
+    - name: Setup Pixi
+      uses: prefix-dev/setup-pixi@v0.8.1
+      with:
+        pixi-version: v0.34.0
+        cache: true
 
-    - name: Build
-      run: cmake --build build --config ${{matrix.config.name}}
-
-    - name: Test
-      run: ctest --test-dir build --output-on-failure --build-config ${{matrix.config.name}}
+    - name: Build and Test
+      run: pixi run dev
 
   coverage:
     name: Coverage Analysis
     runs-on: ubuntu-latest
-    container: ghcr.io/griswaldbrooks/spanny3:upstream
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
-    - name: Configure Coverage Build
-      env:
-        CC: clang-18
-        CXX: clang++-18
-      run: cmake -B build -DCMAKE_BUILD_TYPE=Coverage -DCMAKE_CXX_FLAGS="-stdlib=libc++"
-
-    - name: Build with Coverage
-      run: cmake --build build --config Coverage
+    - name: Setup Pixi
+      uses: prefix-dev/setup-pixi@v0.8.1
+      with:
+        pixi-version: v0.34.0
+        cache: true
 
     - name: Run Coverage Analysis
-      run: cmake --build build --target coverage
+      run: pixi run coverage
 
     - name: Upload Coverage Reports
       uses: actions/upload-artifact@v4
@@ -72,3 +61,20 @@ jobs:
         echo '```' >> $GITHUB_STEP_SUMMARY
         cat build/coverage/reports/coverage.txt >> $GITHUB_STEP_SUMMARY
         echo '```' >> $GITHUB_STEP_SUMMARY
+
+  lint:
+    name: Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Pixi
+      uses: prefix-dev/setup-pixi@v0.8.1
+      with:
+        pixi-version: v0.34.0
+        cache: true
+
+    - name: Run Linting
+      run: pixi run lint
