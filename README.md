@@ -4,7 +4,29 @@ Robot arm project for CppCon 2024 presentation.
 
 # Development Environment
 
-## Docker-Native Development Workflow
+## Choose Your Development Workflow
+
+This project supports two development workflows:
+
+### 🚀 [Pixi Development](PIXI_DEVELOPMENT.md) (Recommended for Local Development)
+- **Quick setup**: One command installs everything
+- **Native performance**: No container overhead
+- **Better IDE integration**: Debuggers and tools work naturally
+- **Cross-platform**: Works on Linux and macOS (Windows not yet supported)
+
+**Quick Start with Pixi:**
+```bash
+# Install Pixi (one-time)
+curl -fsSL https://pixi.sh/install.sh | bash
+
+# Setup and build
+pixi install
+pixi run dev
+```
+
+[**→ Full Pixi Development Guide**](PIXI_DEVELOPMENT.md)
+
+### 🐳 Docker-Native Development Workflow (For CI/CD Compatibility)
 
 This project uses a **Docker-native approach** for development with the following principles:
 - **No wrapper scripts**: Pure Docker Compose commands only
@@ -13,7 +35,17 @@ This project uses a **Docker-native approach** for development with the followin
 - **Persistent caches**: Build artifacts and pre-commit caches survive container restarts
 - **Enhanced security**: Minimal privileges instead of `privileged: true`
 
-## Quick Start
+## Which Workflow Should I Use?
+
+| Use Case | Recommended Workflow | Why |
+|----------|---------------------|-----|
+| Daily development on your machine | Pixi | Faster, simpler commands, better IDE support |
+| Quick prototyping and testing | Pixi | No container overhead |
+| CI/CD pipelines | Docker | Already configured in GitHub Actions |
+| Restricted environments | Docker | When you can't install Pixi |
+| Production deployment | Docker | Container isolation |
+
+## Quick Start with Docker
 
 ### 1. Build the development image
 ```shell
@@ -27,18 +59,18 @@ export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compos
 
 ### 3. Build the project (inside container)
 ```shell
-cmake -S src/spanny3 -B artifacts/build
-cmake --build artifacts/build
+cmake -S . -B build
+cmake --build build
 ```
 
 ### 4. Run the application
 ```shell
-./artifacts/build/rrt_cli
+./build/rrt_cli
 ```
 
 ### 5. Run tests
 ```shell
-ctest --test-dir artifacts/build --output-on-failure
+ctest --test-dir build --output-on-failure
 ```
 
 ## Development Commands
@@ -47,18 +79,18 @@ All commands should be run from inside the development container:
 
 ### Build Project
 ```shell
-cmake -S src/spanny3 -B artifacts/build
-cmake --build artifacts/build
+cmake -S . -B build
+cmake --build build
 ```
 
 ### Run Tests
 ```shell
-ctest --test-dir artifacts/build --output-on-failure
+ctest --test-dir build --output-on-failure
 ```
 
 ### Run Linting
 ```shell
-cd src/spanny3 && pre-commit run --all-files
+pre-commit run --all-files
 ```
 
 ## Container Features
@@ -77,27 +109,27 @@ Docker has no native way to automatically detect host user IDs. The manual expor
 - Maintains clear visibility of what's happening
 - Follows Docker Compose best practices
 
-# coverage
+# Coverage
 Generate and view code coverage reports (run inside development container):
 
 ## Quick Coverage Summary
 Build with coverage and view CLI summary:
 ```shell
-cmake -S src/spanny3 -B artifacts/build -DCMAKE_BUILD_TYPE=Coverage
-cmake --build artifacts/build
-cmake --build artifacts/build --target coverage
-cat artifacts/build/coverage/reports/coverage.txt
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Coverage
+cmake --build build
+cmake --build build --target coverage
+cat build/coverage/reports/coverage.txt
 ```
 
 ## View Coverage in Browser
-Coverage HTML reports are accessible from host since artifacts directory is mounted:
-- **From host**: Open `artifacts/build/coverage/reports/html/index.html` in your browser
+Coverage HTML reports are accessible from host:
+- **From host**: Open `build/coverage/reports/html/index.html` in your browser
 
 ## Individual Coverage Commands
-- **Clean coverage data**: `cmake --build artifacts/build --target coverage-clean`
-- **Run tests with coverage**: `cmake --build artifacts/build --target coverage-run`
-- **Generate reports only**: `cmake --build artifacts/build --target coverage-report`
-- **Full pipeline**: `cmake --build artifacts/build --target coverage`
+- **Clean coverage data**: `cmake --build build --target coverage-clean`
+- **Run tests with coverage**: `cmake --build build --target coverage-run`
+- **Generate reports only**: `cmake --build build --target coverage-report`
+- **Full pipeline**: `cmake --build build --target coverage`
 
 # remove orphaned containers
 ```shell
@@ -110,3 +142,39 @@ export PORT=5051
 socat TCP-LISTEN:${PORT},fork,reuseaddr EXEC:"clangd -log=verbose --background-index --path-mappings='/host/path/to/source=/container/path/to/source'"
 
 ```
+
+# Documentation
+
+- **[Pixi Development Guide](PIXI_DEVELOPMENT.md)** - Modern package management for local development
+- **[Claude Code Configuration](CLAUDE.md)** - AI assistant configuration and workflows
+- **[Improvement Plan](IMPROVEMENT_PLAN.md)** - Roadmap and planned enhancements
+
+# Project Structure
+
+```
+spanny3/
+├── src/                 # Source code
+│   ├── rrt.cpp         # RRT algorithm implementation
+│   └── rrt_cli.cpp     # Command-line interface
+├── include/            # Headers
+│   └── spanny/         # Project headers
+├── test/               # Tests
+│   └── test_rrt.cpp    # RRT algorithm tests
+├── config/             # Configuration files
+│   └── scenario.json   # Example planning scenario
+├── pixi.toml           # Pixi package configuration
+├── CMakeLists.txt      # CMake build configuration
+├── CMakePresets.json   # CMake presets for different builds
+└── compose.dev.yml     # Docker development environment
+```
+
+# Contributing
+
+1. Choose your development environment ([Pixi](PIXI_DEVELOPMENT.md) or Docker)
+2. Make your changes
+3. Run tests: `pixi run test` or `ctest --test-dir build`
+4. Submit a pull request
+
+# License
+
+See LICENSE file for details.

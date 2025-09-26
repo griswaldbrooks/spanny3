@@ -1,0 +1,113 @@
+[project]
+name = "spanny3"
+version = "0.1.0"
+description = "C++23 RRT path planning implementation with modern robotics algorithms"
+authors = ["griswaldbrooks <griswald.brooks@gmail.com>"]
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64", "osx-64"]
+
+[environments]
+# Default environment for development
+default = { features = ["dev", "test", "coverage", "docs", "lint"], solve-group = "default" }
+# Minimal environment for building only
+build = { features = [], solve-group = "build" }
+# CI environment matching GitHub Actions
+ci = { features = ["test", "coverage", "lint"], solve-group = "ci" }
+
+[dependencies]
+# Core build dependencies
+cmake = ">=3.28,<4"
+ninja = ">=1.11,<2"
+pkg-config = ">=0.29,<1"
+
+# Clang toolchain (pinned for consistency)
+clangxx = "18.*"
+clang-tools = "18.*"
+llvmdev = "18.*"
+
+[target.linux-64.dependencies]
+libcxx = "18.*"
+libcxxabi = "18.*"
+libcxx-devel = "18.*"
+compiler-rt = "18.*"
+
+# Third-party libraries (header-only are handled by CMake)
+nlohmann_json = ">=3.11,<4"
+
+[feature.dev.dependencies]
+# Development tools
+ccache = ">=4.8,<5"
+pre-commit = ">=3.5,<4"
+codespell = ">=2.2,<3"
+
+[feature.dev.target.linux-64.dependencies]
+gdb = ">=13,<15"
+
+[feature.dev.target.osx-arm64.dependencies]
+lldb = ">=18,<19"
+
+[feature.dev.target.osx-64.dependencies]
+lldb = ">=18,<19"
+
+[feature.test.dependencies]
+# Testing framework (will be fetched by CMake but this ensures tools are available)
+gtest = ">=1.14,<2"
+
+[feature.coverage.dependencies]
+
+[feature.docs.dependencies]
+# Documentation generation
+doxygen = ">=1.9,<2"
+graphviz = ">=8,<10"
+nodejs = ">=20,<22"  # For Docusaurus
+
+[feature.lint.dependencies]
+# Linting and formatting
+clang-format = "18.*"
+cppcheck = ">=2.12,<3"
+
+[tasks]
+# Setup and configuration tasks
+configure = { cmd = "cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_EXE_LINKER_FLAGS='-L$CONDA_PREFIX/lib -Wl,-rpath,$CONDA_PREFIX/lib' -DCMAKE_SHARED_LINKER_FLAGS='-L$CONDA_PREFIX/lib -Wl,-rpath,$CONDA_PREFIX/lib'", description = "Configure CMake build (Debug)" }
+configure-release = { cmd = "cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXE_LINKER_FLAGS='-L$CONDA_PREFIX/lib -Wl,-rpath,$CONDA_PREFIX/lib' -DCMAKE_SHARED_LINKER_FLAGS='-L$CONDA_PREFIX/lib -Wl,-rpath,$CONDA_PREFIX/lib'", description = "Configure CMake build (Release)" }
+configure-coverage = { cmd = "cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Coverage -DCMAKE_EXE_LINKER_FLAGS='-L$CONDA_PREFIX/lib -Wl,-rpath,$CONDA_PREFIX/lib' -DCMAKE_SHARED_LINKER_FLAGS='-L$CONDA_PREFIX/lib -Wl,-rpath,$CONDA_PREFIX/lib'", description = "Configure CMake build (Coverage)" }
+
+# Build tasks
+build = { cmd = "cmake --build build", description = "Build the project", depends-on = ["configure"] }
+build-release = { cmd = "cmake --build build", description = "Build release version", depends-on = ["configure-release"] }
+clean = { cmd = "cmake --build build --target clean", description = "Clean build artifacts" }
+rebuild = { cmd = "cmake --build build --clean-first", description = "Clean and rebuild", depends-on = ["configure"] }
+
+# Test tasks
+test = { cmd = "ctest --test-dir build --output-on-failure", description = "Run tests", depends-on = ["build"] }
+test-verbose = { cmd = "ctest --test-dir build --output-on-failure --verbose", description = "Run tests with verbose output", depends-on = ["build"] }
+
+# Coverage tasks
+coverage-build = { cmd = "cmake --build build", description = "Build with coverage", depends-on = ["configure-coverage"] }
+coverage-run = { cmd = "cmake --build build --target coverage", description = "Run full coverage analysis", depends-on = ["coverage-build"] }
+coverage-report = { cmd = "cmake --build build --target coverage-report", description = "Generate coverage report only" }
+coverage-clean = { cmd = "cmake --build build --target coverage-clean", description = "Clean coverage data" }
+coverage = { depends-on = ["coverage-run"], description = "Shorthand for coverage-run" }
+
+# Code quality tasks
+format = { cmd = "pre-commit run clang-format --all-files", description = "Format code with clang-format" }
+lint = { cmd = "pre-commit run --all-files", description = "Run all pre-commit checks" }
+tidy = { cmd = "run-clang-tidy -p build", description = "Run clang-tidy static analysis", depends-on = ["build"] }
+
+# Development workflow tasks
+dev = { depends-on = ["configure", "build", "test"], description = "Full development cycle" }
+dev-coverage = { depends-on = ["configure-coverage", "coverage-run"], description = "Development with coverage" }
+ci = { depends-on = ["lint", "build", "test"], description = "CI pipeline tasks" }
+
+# Utility tasks
+run = { cmd = "build/rrt_cli --scenario config/scenario.json", description = "Run the RRT CLI tool", depends-on = ["build"] }
+run-scenario = { cmd = "build/rrt_cli --scenario config/scenario.json", description = "Run with default scenario", depends-on = ["build"] }
+shell = { cmd = "bash", description = "Start interactive shell in Pixi environment" }
+
+[activation.env]
+CC = "clang"
+CXX = "clang++"
+
+[target.linux-64.activation.env]
+CXXFLAGS = "-stdlib=libc++"
+CPLUS_INCLUDE_PATH = "$CONDA_PREFIX/include/c++/v1"

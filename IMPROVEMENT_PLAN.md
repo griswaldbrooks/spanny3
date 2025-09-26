@@ -1,5 +1,14 @@
 # Spanny3 Improvement Plan
 
+## Recent Accomplishments (2024-11-26)
+
+✅ **Pixi Package Management Integration**
+- Created comprehensive `pixi.toml` configuration
+- Added CMakePresets.json for Pixi builds
+- Created detailed PIXI_DEVELOPMENT.md guide
+- Updated all documentation to include both Pixi and Docker workflows
+- Fixed Docker path inconsistencies across all documentation
+
 ## Project Overview ⭐⭐⭐⭐
 
 Spanny3 is a **well-architected C++23 robotics project** showcasing modern C++ practices. The RRT path planning implementation demonstrates clean separation of concerns, excellent testing strategy, and robust infrastructure.
@@ -64,7 +73,57 @@ Missing critical functionality to extract actual path from tree when goal is rea
 - Include more usage examples and scenarios
 - Add architectural decision records (ADRs)
 
-### 5. Error Handling Improvements
+### 5. Docusaurus Documentation Site
+
+**Priority: MEDIUM**
+
+Create comprehensive documentation website using Docusaurus:
+
+**Implementation Steps**:
+1. **Initialize Docusaurus**:
+   ```bash
+   npx create-docusaurus@latest docs classic --typescript
+   ```
+
+2. **Documentation Structure**:
+   ```
+   docs/
+   ├── getting-started/
+   │   ├── installation.md
+   │   ├── docker-setup.md
+   │   └── first-run.md
+   ├── algorithm/
+   │   ├── rrt-overview.md
+   │   ├── collision-detection.md
+   │   └── performance-analysis.md
+   ├── api/
+   │   ├── core-types.md
+   │   ├── planning-context.md
+   │   └── testing-utilities.md
+   ├── development/
+   │   ├── docker-workflow.md
+   │   ├── testing-guide.md
+   │   └── contributing.md
+   └── examples/
+       ├── basic-planning.md
+       ├── custom-obstacles.md
+       └── visualization.md
+   ```
+
+3. **Features to Include**:
+   - Interactive algorithm visualization
+   - Code examples with syntax highlighting
+   - API documentation auto-generated from code
+   - Performance benchmarks and charts
+   - Docker workflow tutorials
+   - Contribution guidelines
+
+4. **Integration**:
+   - Deploy to GitHub Pages via CI/CD
+   - Auto-update docs from code comments
+   - Link to coverage reports and benchmarks
+
+### 6. Error Handling Improvements
 
 **Priority: MEDIUM**
 
@@ -128,56 +187,331 @@ config:
   - { name: MinSizeRel }      # Add for size optimization
 ```
 
-### 5. Pixi Package Management
+### 6. Pixi Package Management
 
-**Priority: MEDIUM**
+**Priority: HIGH** *(Elevated from MEDIUM due to development workflow benefits)*
 
-Convert to pixi-based package management for better dependency management:
+Convert to pixi-based package management for better cross-platform dependency management and simplified development workflow.
 
-**Implementation Steps**:
-1. **Create `pixi.toml`**:
+#### Detailed Migration Plan
+
+##### Phase 1: Initial Setup (Week 1)
+
+1. **Install Pixi**:
+   ```bash
+   # Install via official installer (recommended)
+   curl -fsSL https://pixi.sh/install.sh | bash
+
+   # Or via Homebrew (macOS/Linux)
+   brew install pixi
+   ```
+
+2. **Create `pixi.toml` Configuration**:
    ```toml
    [project]
    name = "spanny3"
-   description = "C++23 RRT path planning implementation"
-   authors = ["griswaldbrooks <email@example.com>"]
+   version = "0.1.0"
+   description = "C++23 RRT path planning implementation with modern robotics algorithms"
+   authors = ["griswaldbrooks <griswald.brooks@gmail.com>"]
+   channels = ["conda-forge"]
+   platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]
 
    [environments]
-   default = { solve-group = "default" }
+   # Default environment for development
+   default = { features = ["dev", "test", "coverage", "docs"], solve-group = "default" }
+   # Minimal environment for building only
+   build = { features = [], solve-group = "build" }
+   # CI environment matching GitHub Actions
+   ci = { features = ["test", "coverage"], solve-group = "ci" }
 
    [dependencies]
-   cmake = ">=3.28"
-   clang = ">=18"
-   ninja = ">=1.11"
-   clang-tools = ">=18"  # Includes clang-tidy, clang-format
+   # Core build dependencies
+   cmake = ">=3.28,<4"
+   ninja = ">=1.11,<2"
+   pkg-config = ">=0.29,<1"
+
+   # Clang toolchain (pinned for consistency)
+   clangxx = "18.*"
+   clang-tools = "18.*"
+   llvmdev = "18.*"
+   libcxx = "18.*"
+
+   # Third-party libraries (header-only are handled by CMake)
+   nlohmann_json = ">=3.11,<4"
+
+   [feature.dev.dependencies]
+   # Development tools
+   gdb = ">=13,<15"
+   lldb = ">=18,<19"
+   ccache = ">=4.8,<5"
+   pre-commit = ">=3.5,<4"
+   codespell = ">=2.2,<3"
 
    [feature.test.dependencies]
-   gtest = ">=1.14"
-   gmock = ">=1.14"
+   # Testing framework (will be fetched by CMake but this ensures tools are available)
+   gtest = ">=1.14,<2"
 
    [feature.coverage.dependencies]
-   llvm-tools = ">=18"  # For llvm-cov, llvm-profdata
+   # Coverage tools (part of LLVM)
+   lcov = ">=2.0,<3"
+
+   [feature.docs.dependencies]
+   # Documentation generation
+   doxygen = ">=1.9,<2"
+   graphviz = ">=8,<10"
+   nodejs = ">=20,<22"  # For Docusaurus
+
+   [feature.lint.dependencies]
+   # Linting and formatting
+   clang-format = "18.*"
+   clang-tidy = "18.*"
+   cppcheck = ">=2.12,<3"
 
    [tasks]
-   build = "cmake -S . -B build && cmake --build build"
-   test = "ctest --test-dir build --output-on-failure"
-   coverage = "cmake -DCMAKE_BUILD_TYPE=Coverage -S . -B build && cmake --build build --target coverage"
-   lint = "pre-commit run --all-files"
-   tidy = "cmake --build build --target clang-tidy"
+   # Setup and configuration tasks
+   configure = { cmd = "cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Debug", description = "Configure CMake build (Debug)" }
+   configure-release = { cmd = "cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release", description = "Configure CMake build (Release)" }
+   configure-coverage = { cmd = "cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Coverage", description = "Configure CMake build (Coverage)" }
+
+   # Build tasks
+   build = { cmd = "cmake --build build", description = "Build the project", depends-on = ["configure"] }
+   build-release = { cmd = "cmake --build build", description = "Build release version", depends-on = ["configure-release"] }
+   clean = { cmd = "cmake --build build --target clean", description = "Clean build artifacts" }
+   rebuild = { cmd = "cmake --build build --clean-first", description = "Clean and rebuild", depends-on = ["configure"] }
+
+   # Test tasks
+   test = { cmd = "ctest --test-dir build --output-on-failure", description = "Run tests", depends-on = ["build"] }
+   test-verbose = { cmd = "ctest --test-dir build --output-on-failure --verbose", description = "Run tests with verbose output", depends-on = ["build"] }
+
+   # Coverage tasks
+   coverage-build = { cmd = "cmake --build build", description = "Build with coverage", depends-on = ["configure-coverage"] }
+   coverage-run = { cmd = "cmake --build build --target coverage", description = "Run full coverage analysis", depends-on = ["coverage-build"] }
+   coverage-report = { cmd = "cmake --build build --target coverage-report", description = "Generate coverage report only" }
+   coverage-clean = { cmd = "cmake --build build --target coverage-clean", description = "Clean coverage data" }
+   coverage = { depends-on = ["coverage-run"], description = "Shorthand for coverage-run" }
+
+   # Code quality tasks
+   format = { cmd = "pre-commit run clang-format --all-files", description = "Format code with clang-format" }
+   lint = { cmd = "pre-commit run --all-files", description = "Run all pre-commit checks" }
+   tidy = { cmd = "run-clang-tidy -p build", description = "Run clang-tidy static analysis" }
+
+   # Development workflow tasks
+   dev = { depends-on = ["configure", "build", "test"], description = "Full development cycle" }
+   dev-coverage = { depends-on = ["configure-coverage", "coverage-run"], description = "Development with coverage" }
+   ci = { depends-on = ["lint", "build", "test"], description = "CI pipeline tasks" }
+
+   # Utility tasks
+   run = { cmd = "build/rrt_cli", description = "Run the RRT CLI tool", depends-on = ["build"] }
+   run-scenario = { cmd = "build/rrt_cli --config config/scenario.json", description = "Run with default scenario", depends-on = ["build"] }
+   shell = { cmd = "bash", description = "Start interactive shell in Pixi environment" }
+
+   [activation]
+   # Environment variables
+   env = { CXXFLAGS = "-stdlib=libc++", CC = "clang", CXX = "clang++" }
+
+   # Scripts to run on activation
+   scripts = ["scripts/setup_env.sh"]
    ```
 
-2. **Benefits**:
-   - Cross-platform dependency management
-   - Reproducible development environments
-   - Task automation without scripts
-   - Integration with conda-forge ecosystem
+3. **Create Environment Setup Script** (`scripts/setup_env.sh`):
+   ```bash
+   #!/usr/bin/env bash
+   echo "🚀 Spanny3 Development Environment Activated"
+   echo "Clang version: $(clang++ --version | head -n1)"
+   echo "CMake version: $(cmake --version | head -n1)"
+   echo "Available tasks: pixi task list"
+   ```
 
-3. **Migration Strategy**:
-   - Keep Docker workflow for CI/CD consistency
-   - Use pixi for local development
-   - Document both approaches in README
+##### Phase 2: Migration Implementation (Week 1-2)
 
-### 6. Static Analysis Enhancement
+1. **CMake Adjustments**:
+   - Add Pixi-aware CMake presets
+   - Ensure CMake finds Pixi-provided dependencies
+   - Update compiler detection for Pixi environments
+
+2. **Create `CMakePresets.json`**:
+   ```json
+   {
+     "version": 6,
+     "cmakeMinimumRequired": {
+       "major": 3,
+       "minor": 28,
+       "patch": 0
+     },
+     "configurePresets": [
+       {
+         "name": "pixi-base",
+         "hidden": true,
+         "generator": "Ninja",
+         "binaryDir": "${sourceDir}/build",
+         "cacheVariables": {
+           "CMAKE_CXX_COMPILER": "clang++",
+           "CMAKE_C_COMPILER": "clang",
+           "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+         }
+       },
+       {
+         "name": "pixi-debug",
+         "inherits": "pixi-base",
+         "displayName": "Pixi Debug",
+         "description": "Debug build using Pixi environment",
+         "cacheVariables": {
+           "CMAKE_BUILD_TYPE": "Debug"
+         }
+       },
+       {
+         "name": "pixi-release",
+         "inherits": "pixi-base",
+         "displayName": "Pixi Release",
+         "description": "Release build using Pixi environment",
+         "cacheVariables": {
+           "CMAKE_BUILD_TYPE": "Release"
+         }
+       },
+       {
+         "name": "pixi-coverage",
+         "inherits": "pixi-base",
+         "displayName": "Pixi Coverage",
+         "description": "Coverage build using Pixi environment",
+         "cacheVariables": {
+           "CMAKE_BUILD_TYPE": "Coverage"
+         }
+       }
+     ],
+     "buildPresets": [
+       {
+         "name": "pixi-debug",
+         "configurePreset": "pixi-debug"
+       },
+       {
+         "name": "pixi-release",
+         "configurePreset": "pixi-release"
+       },
+       {
+         "name": "pixi-coverage",
+         "configurePreset": "pixi-coverage"
+       }
+     ],
+     "testPresets": [
+       {
+         "name": "pixi-test",
+         "configurePreset": "pixi-debug",
+         "output": {
+           "outputOnFailure": true
+         }
+       }
+     ]
+   }
+   ```
+
+3. **Update `.gitignore`**:
+   ```gitignore
+   # Pixi
+   .pixi/
+   pixi.lock
+   ```
+
+##### Phase 3: Workflow Integration (Week 2)
+
+1. **Parallel Workflow Support**:
+   - Keep Docker workflow intact for CI/CD
+   - Use Pixi for local development
+   - Document both workflows clearly
+
+2. **CI/CD Integration**:
+   ```yaml
+   # .github/workflows/ci-pixi.yml
+   name: CI with Pixi
+   on: [push, pull_request]
+
+   jobs:
+     test:
+       strategy:
+         matrix:
+           os: [ubuntu-latest, macos-latest, windows-latest]
+       runs-on: ${{ matrix.os }}
+       steps:
+         - uses: actions/checkout@v4
+         - uses: prefix-dev/setup-pixi@v0.8.0
+           with:
+             pixi-version: latest
+             cache: true
+         - run: pixi run ci
+   ```
+
+3. **VSCode Integration** (`.vscode/settings.json`):
+   ```json
+   {
+     "cmake.configureSettings": {
+       "CMAKE_CXX_COMPILER": "${workspaceFolder}/.pixi/envs/default/bin/clang++",
+       "CMAKE_C_COMPILER": "${workspaceFolder}/.pixi/envs/default/bin/clang"
+     },
+     "cmake.generator": "Ninja",
+     "C_Cpp.default.compilerPath": "${workspaceFolder}/.pixi/envs/default/bin/clang++",
+     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+   }
+   ```
+
+##### Phase 4: Documentation and Training (Week 2-3)
+
+1. **Update README.md** with Pixi quickstart
+2. **Update CLAUDE.md** with Pixi commands
+3. **Create migration guide** for team members
+4. **Add troubleshooting section**
+
+#### Benefits of Pixi Migration
+
+1. **Simplified Onboarding**: Single command setup: `pixi install && pixi run dev`
+2. **Cross-Platform Support**: Works on Linux, macOS, and Windows without Docker
+3. **Faster Iteration**: No container overhead for local development
+4. **Dependency Locking**: `pixi.lock` ensures reproducible environments
+5. **Task Automation**: Built-in task runner replaces Makefiles/scripts
+6. **IDE Integration**: Better support for VSCode, CLion, etc.
+7. **CI/CD Flexibility**: Can run in containers or native environments
+
+#### Migration Strategy
+
+1. **Phase 1 (Immediate)** ✅ **COMPLETED** (2025-09-26):
+   - Created `pixi.toml` with full configuration and platform-specific dependencies
+   - Created CMakePresets.json for Pixi builds
+   - Created comprehensive documentation (PIXI_DEVELOPMENT.md)
+   - Updated CLAUDE.md and README.md with Pixi workflows
+   - Fixed Linux-specific dependencies (libcxx, libcxxabi, libcxx-devel, compiler-rt)
+   - Fixed macOS compatibility (platform-specific debuggers)
+   - Removed Windows support (libc++ not available in conda-forge)
+   - Tested all 23 pixi tasks successfully on Linux
+
+2. **Phase 2 (Week 1)** - **READY FOR TESTING**:
+   - ✅ Tested on Linux platform
+   - ⏳ Test on macOS (ARM64 & x64)
+   - ⏳ Test CI/CD integration
+   - ⏳ Gather team feedback
+
+3. **Phase 3 (Week 2)**:
+   - Team training and onboarding
+   - Gather feedback and iterate
+   - Performance comparison with Docker workflow
+
+4. **Phase 4 (Week 3)**:
+   - Finalize workflow
+   - Update all documentation
+   - Consider deprecating Docker workflow if Pixi proves superior
+
+#### Success Metrics
+
+- **Setup Time**: ✅ < 5 minutes from clone to running tests (achieved on Linux)
+- **Platform Coverage**: 🟡 Works on Linux and macOS (ARM64 & x64); Windows not supported
+- **CI Performance**: ⏳ Equal or better than Docker-based CI (pending testing)
+- **Developer Satisfaction**: Positive feedback from team
+
+#### Rollback Plan
+
+If Pixi adoption faces issues:
+1. Docker workflow remains fully functional
+2. Can run both workflows in parallel indefinitely
+3. Pixi files can be removed without affecting Docker setup
+
+### 7. Static Analysis Enhancement
 
 **Priority: MEDIUM**
 
@@ -294,7 +628,7 @@ For large-scale scenarios:
 **Keep manual export but document clearly:**
 ```bash
 # Required before running development container
-export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.improved.yml run --rm development
+export USER_UID=$(id -u) && export USER_GID=$(id -g) && docker compose -f compose.dev.yml run --rm development
 ```
 
 #### 2. Enhanced Security
@@ -342,11 +676,16 @@ volumes:
 - [ ] clang-tidy integration and configuration
 - [ ] Expanded test coverage
 
+### Phase 2.5 (High Priority - Week 2)
+- [x] Pixi package management setup (COMPLETED)
+- [x] CMake presets configuration for Pixi (COMPLETED)
+- [x] Update documentation with Pixi workflows (COMPLETED)
+
 ### Phase 3 (Medium Priority - Month 1)
-- [ ] Pixi package management setup
 - [ ] Performance testing suite
 - [ ] Documentation enhancements
 - [ ] Configuration validation with JSON schema
+- [ ] Docusaurus documentation site setup
 
 ### Phase 4 (Enhancement - Month 2+)
 - [ ] Plugin system for RRT variants

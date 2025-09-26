@@ -1,0 +1,84 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 28,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "pixi-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_CXX_FLAGS": "-stdlib=libc++"
+      }
+    },
+    {
+      "name": "pixi-debug",
+      "inherits": "pixi-base",
+      "displayName": "Pixi Debug",
+      "description": "Debug build using Pixi environment",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "pixi-release",
+      "inherits": "pixi-base",
+      "displayName": "Pixi Release",
+      "description": "Release build using Pixi environment",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "pixi-coverage",
+      "inherits": "pixi-base",
+      "displayName": "Pixi Coverage",
+      "description": "Coverage build using Pixi environment",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Coverage"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "pixi-debug",
+      "configurePreset": "pixi-debug",
+      "description": "Build with debug configuration"
+    },
+    {
+      "name": "pixi-release",
+      "configurePreset": "pixi-release",
+      "description": "Build with release configuration"
+    },
+    {
+      "name": "pixi-coverage",
+      "configurePreset": "pixi-coverage",
+      "description": "Build with coverage configuration"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "pixi-test",
+      "configurePreset": "pixi-debug",
+      "description": "Run tests with debug configuration",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "pixi-test-coverage",
+      "configurePreset": "pixi-coverage",
+      "description": "Run tests with coverage configuration",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

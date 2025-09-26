@@ -4,3 +4,7 @@ build
 # Coverage files
 *.profraw
 *.profdata
+
+# Pixi
+.pixi/
+pixi.lock
