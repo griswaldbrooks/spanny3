@@ -268,37 +268,14 @@ Run with:
 pixi run my-task
 ```
 
-## Pixi vs Docker Comparison
+## CI/CD Integration
 
-| Aspect | Pixi | Docker |
-|--------|------|--------|
-| **Installation** | Simple installer | Requires Docker Desktop |
-| **Performance** | Native speed | Container overhead |
-| **IDE Support** | Excellent | Limited |
-| **Commands** | `pixi run build` | Long docker-compose commands |
-| **Debugging** | Native debuggers work | Complex setup |
-| **CI/CD** | Good | Excellent |
-| **Reproducibility** | Very good | Perfect |
+This project uses Pixi for both local development and CI/CD pipelines:
 
-## When to Use Docker Instead
-
-While Pixi is great for development, use Docker for:
-
-- **CI/CD pipelines** - GitHub Actions already set up
-- **Production deployments** - Container isolation
-- **Team members who can't install Pixi** - Fallback option
-- **Absolute reproducibility** - Bit-for-bit identical
-
-## Migration from Docker
-
-If you're currently using Docker:
-
-1. **Keep Docker setup** - Don't remove it
-2. **Try Pixi locally** - Test the workflow
-3. **Compare speed** - Pixi should be faster
-4. **Gradually switch** - Use what works best
-
-Both can coexist - Docker for CI/CD, Pixi for development.
+- **GitHub Actions**: Workflows use `prefix-dev/setup-pixi` action
+- **Multi-platform**: Tests run on Linux, macOS (ARM64 & x64)
+- **Consistent**: Same commands locally and in CI (`pixi run dev`, `pixi run coverage`)
+- **Fast**: Pixi's caching significantly speeds up CI runs
 
 ## Getting Help
 
@@ -317,9 +294,6 @@ Both can coexist - Docker for CI/CD, Pixi for development.
 
 - **Issue**: CMake can't find dependencies
   - **Solution**: Use `pixi shell` or CMake presets
-
-- **Issue**: Different behavior than Docker
-  - **Solution**: Check `pixi.toml` matches Dockerfile
 
 ### Platform Notes
 
