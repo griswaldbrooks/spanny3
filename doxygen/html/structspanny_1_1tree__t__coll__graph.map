@@ -1,0 +1,18 @@
+<map id="spanny::tree_t" name="spanny::tree_t">
+<area shape="rect" id="Node000001" title=" " alt="" coords="195,284,310,309"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="88,181,241,221"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="194,229,243,282,240,285,190,233"/>
+<area shape="rect" id="Node000003" href="$structspanny_1_1node__t.html" title=" " alt="" coords="15,93,135,119"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="74,133,75,145,79,156,90,169,105,179,102,183,87,173,74,159,69,146,68,133"/>
+<area shape="rect" id="Node000004" href="$structspanny_1_1position__t.html" title=" " alt="" coords="5,5,145,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="78,45,78,93,73,93,73,45"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="215,93,344,119"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="203,121,184,130,170,144,163,162,163,181,158,181,158,161,165,141,181,126,200,116"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="265,181,419,221"/>
+<area shape="poly" id="edge8_Node000007_Node000005" title=" " alt="" coords="299,128,308,141,333,180,328,183,304,144,294,131"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="260,5,299,31"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="282,45,282,93,277,93,277,45"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="316,233,266,285,262,282,313,229"/>
+<area shape="rect" id="Node000008" href="$structspanny_1_1edge__t.html" title=" " alt="" coords="439,93,559,119"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="485,131,454,160,407,184,404,179,451,155,481,127"/>
+</map>
