@@ -81,6 +81,7 @@ The benchmark suite includes:
 
 # Documentation
 
+- **[Online Documentation](https://griswaldbrooks.github.io/spanny3/)** - User guides and API reference
 - **[Pixi Development Guide](PIXI_DEVELOPMENT.md)** - Package management and workflows
 - **[Claude Code Configuration](CLAUDE.md)** - AI assistant configuration
 - **[Improvement Plan](IMPROVEMENT_PLAN.md)** - Roadmap and planned enhancements
@@ -98,8 +99,12 @@ spanny3/
 │   └── test_rrt.cpp    # RRT algorithm tests
 ├── benchmark/          # Performance benchmarks
 │   └── benchmark_rrt.cpp # Google Benchmark suite
+├── docs/               # Docusaurus documentation site
+│   ├── docs/           # Markdown documentation
+│   └── static/doxygen/ # Auto-generated API docs
 ├── config/             # Configuration files
 │   └── scenario.json   # Example planning scenario
+├── Doxyfile            # Doxygen configuration
 ├── pixi.toml           # Pixi package configuration
 ├── CMakeLists.txt      # CMake build configuration
 └── CMakePresets.json   # CMake presets for Pixi builds

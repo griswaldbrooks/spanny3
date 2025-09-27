@@ -21,6 +21,7 @@ This project uses **Pixi** for package management and development workflows with
 - **Type System** (`include/spanny/like.hpp`): C++20 concepts for behavioral constraints
 - **Tests** (`test/test_rrt.cpp`): GoogleTest framework with mocking for stochastic components
 - **Benchmarks** (`benchmark/benchmark_rrt.cpp`): Google Benchmark suite for performance analysis
+- **Documentation** (`docs/`): Docusaurus site with manual guides and auto-generated Doxygen API reference
 
 ### Technical Highlights
 - **Modern C++23**: Uses `std::expected`, concepts, `std::ranges`, and designated initializers
@@ -117,6 +118,54 @@ Benchmark suite coverage:
 - **Collision Detection**: Line-circle intersection scaling (1-100 obstacles)
 - **Nearest Neighbor**: Linear search performance (10-1000 nodes)
 
+## Documentation
+
+### Online Documentation
+- **Live Site**: https://griswaldbrooks.github.io/spanny3/
+- **User Guides**: Getting started, algorithm explanations, development workflows
+- **API Guide**: Manual documentation with examples (`docs/docs/api/`)
+- **API Reference**: Auto-generated Doxygen documentation (`/doxygen/html/`)
+
+### Local Documentation Development
+```bash
+# Start Docusaurus dev server
+cd docs
+npm install
+npm start  # Opens http://localhost:3000
+
+# Generate Doxygen locally
+doxygen Doxyfile  # Output to docs/static/doxygen/
+
+# Build documentation site
+cd docs
+npm run build  # Output to docs/build/
+```
+
+### Documentation Structure
+```
+docs/
+├── docs/                       # Markdown source files
+│   ├── getting-started/       # Installation and setup
+│   ├── algorithm/             # Algorithm explanations
+│   ├── development/           # Development workflows
+│   ├── examples/              # Code examples
+│   └── api/                   # Manual API documentation
+├── static/doxygen/            # Auto-generated Doxygen output
+├── docusaurus.config.ts       # Docusaurus configuration
+└── sidebars.ts                # Navigation structure
+```
+
+### Adding Documentation
+1. Create markdown file in `docs/docs/`
+2. Update `sidebars.ts` if needed
+3. Run `npm start` to preview
+4. Push to main → auto-deploys to GitHub Pages
+
+### Known Documentation Issues
+- **Pre-commit lint failures**: `docs/tsconfig.json` and `docs/package-lock.json` excluded from JSON/codespell checks
+- **Doxygen output**: Generated to `docs/static/doxygen/` but not committed (CI generates it)
+- **Node.js version**: Requires Node.js 20+ for Docusaurus build
+
 ## Hooks Configuration
 
 ### Pixi-based Hooks
@@ -201,9 +250,10 @@ Edge relationship is reversed - `tree.edges.emplace_back(sample.id, closest.id, 
 
 ### CI/CD Notes
 - CI runs on Linux and macOS (ARM64 & x64) using Pixi
-- Four jobs: build (6 configs), coverage (Linux only), benchmark (Linux only), lint
+- Five jobs: build (6 configs), coverage (Linux only), benchmark (Linux only), lint, deploy-docs
 - All commands: `pixi run dev`, `pixi run coverage`, `pixi run benchmark`, `pixi run lint`
 - Benchmark results displayed in GitHub step summary and uploaded as JSON artifacts
+- Documentation auto-deploys to GitHub Pages on push to main
 - If Pixi version changes locally, may need to update CI to match
 - Always commit `pixi.lock` after dependency changes
 
