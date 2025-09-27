@@ -20,6 +20,7 @@ This project uses **Pixi** for package management and development workflows with
 - **CLI Tool** (`src/rrt_cli.cpp`): Command-line interface for running path planning scenarios
 - **Type System** (`include/spanny/like.hpp`): C++20 concepts for behavioral constraints
 - **Tests** (`test/test_rrt.cpp`): GoogleTest framework with mocking for stochastic components
+- **Benchmarks** (`benchmark/benchmark_rrt.cpp`): Google Benchmark suite for performance analysis
 
 ### Technical Highlights
 - **Modern C++23**: Uses `std::expected`, concepts, `std::ranges`, and designated initializers
@@ -31,6 +32,7 @@ This project uses **Pixi** for package management and development workflows with
 - **nlohmann::json**: Configuration file parsing
 - **cxxopts**: Command-line argument parsing
 - **GoogleTest/GoogleMock**: Testing framework
+- **Google Benchmark**: Performance benchmarking framework (fetched by CMake)
 - **Pre-commit**: Code formatting and linting
 
 ## Development Workflow Commands
@@ -58,6 +60,8 @@ pixi run build           # Build the project
 pixi run test            # Run tests
 pixi run coverage        # Generate coverage report
 pixi run lint            # Run all linters and formatters
+pixi run benchmark       # Run performance benchmarks
+pixi run benchmark-json  # Run benchmarks and save JSON results
 
 # Release builds
 pixi run build-release   # Build optimized version
@@ -93,6 +97,26 @@ View coverage reports:
 - **HTML Report**: Open `build/coverage/reports/html/index.html` in browser
 - **Text Summary**: View `build/coverage/reports/coverage.txt`
 
+## Benchmark Commands
+
+Run performance benchmarks:
+```bash
+pixi run benchmark           # Console output
+pixi run benchmark-json      # Save JSON results
+```
+
+View benchmark results:
+- **Console output**: Displayed immediately during `pixi run benchmark`
+- **JSON results**: Saved to `build/benchmark_results.json`
+- **CI Reports**: Automatically uploaded as artifacts in GitHub Actions
+
+Benchmark suite coverage:
+- **RRT Planning**: End-to-end planning with varying expansion limits (100, 500, 1000 nodes)
+  - Simple scenario (no obstacles): Baseline performance
+  - Complex scenario (4 obstacles): Real-world performance
+- **Collision Detection**: Line-circle intersection scaling (1-100 obstacles)
+- **Nearest Neighbor**: Linear search performance (10-1000 nodes)
+
 ## Hooks Configuration
 
 ### Pixi-based Hooks
@@ -119,6 +143,12 @@ pixi run lint
 Run full coverage analysis:
 ```bash
 pixi run coverage
+```
+
+#### Benchmark Hook
+Run performance benchmarks:
+```bash
+pixi run benchmark
 ```
 
 #### Full Development Cycle Hook
@@ -153,8 +183,10 @@ pixi run dev
 - **Error Handling**: Uses `std::expected<T, std::string>` throughout for recoverable errors
 - **Concepts**: `some_point` and `some_random_generator` enable generic programming
 - **Testing Strategy**: Mock random generators for deterministic testing of stochastic algorithms
+- **Benchmarking Strategy**: Fixed random seeds (42) for deterministic and reproducible performance measurements
 - **Collision Detection**: Line-circle intersection using quadratic equation solving
 - **Path Planning**: RRT with configurable sampling distance, goal probability, and expansion limits
+- **Performance Bottleneck**: Nearest neighbor search uses O(n) linear search; KD-tree recommended for 10,000+ nodes
 
 ## Known Issues and Next Steps
 
@@ -169,8 +201,9 @@ Edge relationship is reversed - `tree.edges.emplace_back(sample.id, closest.id, 
 
 ### CI/CD Notes
 - CI runs on Linux and macOS (ARM64 & x64) using Pixi
-- Three jobs: build (6 configs), coverage (Linux only), lint
-- All commands: `pixi run dev`, `pixi run coverage`, `pixi run lint`
+- Four jobs: build (6 configs), coverage (Linux only), benchmark (Linux only), lint
+- All commands: `pixi run dev`, `pixi run coverage`, `pixi run benchmark`, `pixi run lint`
+- Benchmark results displayed in GitHub step summary and uploaded as JSON artifacts
 - If Pixi version changes locally, may need to update CI to match
 - Always commit `pixi.lock` after dependency changes
 
