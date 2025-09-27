@@ -7,3 +7,4 @@ build
 
 # Pixi
 .pixi/
+docs/static/doxygen/
