@@ -34,7 +34,14 @@ jobs:
 
       - name: Install Docusaurus Dependencies
         working-directory: docs
-        run: npm ci --prefer-offline --no-audit
+        run: |
+          # First try npm ci, if it fails due to integrity issues, regenerate package-lock.json
+          npm ci --prefer-offline --no-audit || {
+            echo "npm ci failed, regenerating package-lock.json..."
+            rm -f package-lock.json
+            npm install --package-lock-only
+            npm ci --prefer-offline --no-audit
+          }
 
       - name: Build Docusaurus Website
         working-directory: docs
