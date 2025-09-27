@@ -39,6 +39,7 @@ pixi run build           # Build the project
 pixi run test            # Run tests
 pixi run coverage        # Generate coverage report
 pixi run lint            # Run all linters
+pixi run benchmark       # Run performance benchmarks
 pixi run run-scenario    # Run with example scenario
 
 # See all available tasks
@@ -58,6 +59,26 @@ open build/coverage/reports/html/index.html  # HTML report
 cat build/coverage/reports/coverage.txt      # Text summary
 ```
 
+## Benchmarking
+
+Run performance benchmarks to measure algorithm efficiency:
+
+```bash
+# Run benchmarks with console output
+pixi run benchmark
+
+# Run benchmarks and save JSON results
+pixi run benchmark-json
+
+# View results
+cat build/benchmark_results.json
+```
+
+The benchmark suite includes:
+- **RRT Planning**: Simple and obstacle-laden scenarios with varying tree sizes
+- **Collision Detection**: Line-circle intersection performance scaling
+- **Nearest Neighbor**: Linear search performance characterization
+
 # Documentation
 
 - **[Pixi Development Guide](PIXI_DEVELOPMENT.md)** - Package management and workflows
@@ -75,6 +96,8 @@ spanny3/
 │   └── spanny/         # Project headers
 ├── test/               # Tests
 │   └── test_rrt.cpp    # RRT algorithm tests
+├── benchmark/          # Performance benchmarks
+│   └── benchmark_rrt.cpp # Google Benchmark suite
 ├── config/             # Configuration files
 │   └── scenario.json   # Example planning scenario
 ├── pixi.toml           # Pixi package configuration

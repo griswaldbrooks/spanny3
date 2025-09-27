@@ -8,11 +8,11 @@ platforms = ["linux-64", "osx-arm64", "osx-64"]
 
 [environments]
 # Default environment for development
-default = { features = ["dev", "test", "coverage", "docs", "lint"], solve-group = "default" }
+default = { features = ["dev", "test", "benchmark", "coverage", "docs", "lint"], solve-group = "default" }
 # Minimal environment for building only
 build = { features = [], solve-group = "build" }
 # CI environment matching GitHub Actions
-ci = { features = ["test", "coverage", "lint"], solve-group = "ci" }
+ci = { features = ["test", "benchmark", "coverage", "lint"], solve-group = "ci" }
 
 [dependencies]
 # Core build dependencies
@@ -52,6 +52,9 @@ lldb = ">=18,<19"
 [feature.test.dependencies]
 # Testing framework (will be fetched by CMake but this ensures tools are available)
 gtest = ">=1.14,<2"
+
+[feature.benchmark.dependencies]
+# Benchmarking framework - fetched by CMake to ensure ABI compatibility with libc++
 
 [feature.coverage.dependencies]
 
@@ -98,6 +101,11 @@ tidy = { cmd = "run-clang-tidy -p build", description = "Run clang-tidy static a
 dev = { depends-on = ["configure", "build", "test"], description = "Full development cycle" }
 dev-coverage = { depends-on = ["configure-coverage", "coverage-run"], description = "Development with coverage" }
 ci = { depends-on = ["lint", "build", "test"], description = "CI pipeline tasks" }
+
+# Benchmark tasks
+benchmark-build = { cmd = "cmake --build build --target rrt_benchmark", description = "Build benchmark executable", depends-on = ["configure"] }
+benchmark = { cmd = "build/rrt_benchmark --benchmark_format=console", description = "Run benchmarks", depends-on = ["benchmark-build"] }
+benchmark-json = { cmd = "build/rrt_benchmark --benchmark_format=json --benchmark_out=build/benchmark_results.json", description = "Run benchmarks and save JSON results", depends-on = ["benchmark-build"] }
 
 # Utility tasks
 run = { cmd = "build/rrt_cli --scenario config/scenario.json", description = "Run the RRT CLI tool", depends-on = ["build"] }

@@ -58,6 +58,27 @@ if(BUILD_TESTING)
   add_subdirectory(test)
 endif()
 
+option(BUILD_BENCHMARKS "Build benchmarks" ON)
+if(BUILD_BENCHMARKS)
+  include(FetchContent)
+  FetchContent_Declare(
+    benchmark
+    GIT_REPOSITORY https://github.com/google/benchmark.git
+    GIT_TAG v1.9.1
+  )
+  set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable benchmark testing")
+  set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "Disable benchmark install")
+  set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "Disable benchmark gtest tests")
+  set(BENCHMARK_USE_BUNDLED_GTEST OFF CACHE BOOL "Use bundled gtest")
+  FetchContent_MakeAvailable(benchmark)
+
+  add_executable(rrt_benchmark
+    benchmark/benchmark_rrt.cpp
+  )
+  target_link_libraries(rrt_benchmark PRIVATE spanny::rrt benchmark::benchmark)
+  target_compile_features(rrt_benchmark PRIVATE cxx_std_23)
+endif()
+
 # Coverage targets
 if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
   find_program(LLVM_COV_PATH NAMES llvm-cov-18 llvm-cov REQUIRED)
