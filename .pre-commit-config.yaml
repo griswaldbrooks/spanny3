@@ -12,7 +12,7 @@
 #
 # See https://github.com/pre-commit/pre-commit
 
-exclude: 'third_party/.*'
+exclude: '^(third_party/.*|docs/(package-lock\.json|tsconfig\.json))$'
 repos:
   # Standard hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
