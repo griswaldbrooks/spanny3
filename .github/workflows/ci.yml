@@ -109,3 +109,5 @@ jobs:
 
     - name: Run Linting
       run: pixi run lint
+      env:
+        SKIP: no-commit-to-branch

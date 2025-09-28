@@ -115,7 +115,7 @@ std::expected<node_id_t, std::string> expand_tree(planning_context_t const& cont
         // Add to tree
         auto const cost = heuristic(closest, sample);
         tree.nodes.emplace_back(sample.position);
-        tree.edges.emplace_back(sample.id, closest.id, cost);
+        tree.edges.emplace_back(closest.id, sample.id, cost);
         return sample.id;
       });
 }
