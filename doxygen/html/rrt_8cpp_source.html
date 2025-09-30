@@ -244,7 +244,7 @@ $(document).ready(function(){initNavTree('rrt_8cpp_source.html',''); initResizab
 <div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>        <span class="comment">// Add to tree</span></div>
 <div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>        <span class="keyword">auto</span> <span class="keyword">const</span> cost = <a class="code hl_function" href="namespacespanny.html#ad12a3b53ad50f0e3f0530d68c9c87a8f">heuristic</a>(closest, sample);</div>
 <div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>        tree.<a class="code hl_variable" href="structspanny_1_1tree__t.html#ad8833369cf2198d6f6981d3c9f9b85d8">nodes</a>.emplace_back(sample.position);</div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>        tree.<a class="code hl_variable" href="structspanny_1_1tree__t.html#a6bea3a65f3218316ce770fa4fbb7f92b">edges</a>.emplace_back(sample.id, closest.id, cost);</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>        tree.<a class="code hl_variable" href="structspanny_1_1tree__t.html#a6bea3a65f3218316ce770fa4fbb7f92b">edges</a>.emplace_back(closest.id, sample.id, cost);</div>
 <div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>        <span class="keywordflow">return</span> sample.id;</div>
 <div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>      });</div>
 <div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>}</div>
@@ -309,7 +309,7 @@ $(document).ready(function(){initNavTree('rrt_8cpp_source.html',''); initResizab
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="rrt_8cpp.html">rrt.cpp</a></li>
-    <li class="footer">Generated on Sat Sep 27 2025 23:54:15 for Spanny3 by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+    <li class="footer">Generated on Tue Sep 30 2025 01:02:22 for Spanny3 by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
   </ul>
 </div>
 </body>
