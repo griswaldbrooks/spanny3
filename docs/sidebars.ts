@@ -12,6 +12,37 @@ const sidebars: SidebarsConfig = {
         'getting-started/first-run',
       ],
     },
+    // Future sections to be added:
+    // {
+    //   type: 'category',
+    //   label: 'Algorithm',
+    //   collapsed: false,
+    //   items: [
+    //     'algorithm/rrt-overview',
+    //     'algorithm/collision-detection',
+    //     'algorithm/performance-analysis',
+    //   ],
+    // },
+    // {
+    //   type: 'category',
+    //   label: 'Development',
+    //   collapsed: false,
+    //   items: [
+    //     'development/pixi-workflow',
+    //     'development/testing-guide',
+    //     'development/contributing',
+    //   ],
+    // },
+    // {
+    //   type: 'category',
+    //   label: 'Examples',
+    //   collapsed: false,
+    //   items: [
+    //     'examples/basic-planning',
+    //     'examples/custom-obstacles',
+    //     'examples/benchmarking',
+    //   ],
+    // },
   ],
   apiSidebar: [
     {
@@ -20,6 +51,10 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       items: [
         'api/core-types',
+        // Future API documentation:
+        // 'api/planning-context',
+        // 'api/rrt-planner',
+        // 'api/testing-utilities',
       ],
     },
   ],
