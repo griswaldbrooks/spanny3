@@ -26,6 +26,7 @@ const config: Config = {
   projectName: 'spanny3', // Usually your repo name.
 
   onBrokenLinks: 'warn',
+  onBrokenMarkdownLinks: 'warn',
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
@@ -100,10 +101,6 @@ const config: Config = {
               to: '/docs/getting-started/installation',
             },
             {
-              label: 'Algorithm',
-              to: '/docs/algorithm/rrt-overview',
-            },
-            {
               label: 'API Reference',
               to: '/docs/api/core-types',
             },
@@ -121,7 +118,7 @@ const config: Config = {
               href: 'https://github.com/griswaldbrooks/spanny3/issues',
             },
             {
-              label: 'Benchmarks',
+              label: 'CI/CD',
               href: 'https://github.com/griswaldbrooks/spanny3/actions',
             },
           ],
