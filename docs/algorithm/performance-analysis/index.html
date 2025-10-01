@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-algorithm/performance-analysis" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.9.1">
+<title data-rh="true">Performance Analysis | Spanny3</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://griswaldbrooks.github.io/spanny3/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://griswaldbrooks.github.io/spanny3/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://griswaldbrooks.github.io/spanny3/docs/algorithm/performance-analysis"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Performance Analysis | Spanny3"><meta data-rh="true" name="description" content="This page presents benchmark results and performance characteristics of the Spanny3 RRT implementation, measured using Google Benchmark on Ubuntu Linux."><meta data-rh="true" property="og:description" content="This page presents benchmark results and performance characteristics of the Spanny3 RRT implementation, measured using Google Benchmark on Ubuntu Linux."><link data-rh="true" rel="icon" href="/spanny3/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://griswaldbrooks.github.io/spanny3/docs/algorithm/performance-analysis"><link data-rh="true" rel="alternate" href="https://griswaldbrooks.github.io/spanny3/docs/algorithm/performance-analysis" hreflang="en"><link data-rh="true" rel="alternate" href="https://griswaldbrooks.github.io/spanny3/docs/algorithm/performance-analysis" hreflang="x-default"><link rel="stylesheet" href="/spanny3/assets/css/styles.a48fac3f.css">
+<script src="/spanny3/assets/js/runtime~main.2f88da56.js" defer="defer"></script>
+<script src="/spanny3/assets/js/main.e8fb9259.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<svg style="display: none;"><defs>
+<symbol id="theme-svg-external-link" viewBox="0 0 24 24"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();document.documentElement.setAttribute("data-theme",t||(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")),document.documentElement.setAttribute("data-theme-choice",t||"system")}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><link rel="preload" as="image" href="/spanny3/img/logo.svg"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="theme-layout-navbar navbar navbar--fixed-top"><div class="navbar__inner"><div class="theme-layout-navbar-left navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/spanny3/"><div class="navbar__logo"><img src="/spanny3/img/logo.svg" alt="Spanny3 Logo" class="themedComponent_mlkZ themedComponent--light_NVdE"><img src="/spanny3/img/logo.svg" alt="Spanny3 Logo" class="themedComponent_mlkZ themedComponent--dark_xIcU"></div><b class="navbar__title text--truncate">Spanny3</b></a><a class="navbar__item navbar__link" href="/spanny3/docs/getting-started/installation">Documentation</a><a class="navbar__item navbar__link" href="/spanny3/docs/api/core-types">API Guide</a><a class="navbar__item navbar__link" href="/spanny3/doxygen/html/index.html">API Reference (Doxygen)</a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a href="https://github.com/griswaldbrooks/spanny3" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="system mode" aria-label="Switch between dark and light mode (currently system mode)"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP systemToggleIcon_QzmC"><path fill="currentColor" d="m12 21c4.971 0 9-4.029 9-9s-4.029-9-9-9-9 4.029-9 9 4.029 9 9 9zm4.95-13.95c1.313 1.313 2.05 3.093 2.05 4.95s-0.738 3.637-2.05 4.95c-1.313 1.313-3.093 2.05-4.95 2.05v-14c1.857 0 3.637 0.737 4.95 2.05z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="theme-layout-main main-wrapper mainWrapper_z2l0"><div class="docsWrapper_hBAB"><button aria-label="Scroll back to top" class="clean-btn theme-back-to-top-button backToTopButton_sjWU" type="button"></button><div class="docRoot_UBD9"><main class="docMainContainer_TBSr docMainContainerEnhanced_lQrH"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_VOVn"><div class="docItemContainer_Djhp"><article><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_ITEo"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><div class="theme-doc-markdown markdown"><header><h1>Performance Analysis</h1></header>
+<p>This page presents benchmark results and performance characteristics of the Spanny3 RRT implementation, measured using Google Benchmark on Ubuntu Linux.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="benchmark-configuration">Benchmark Configuration<a href="#benchmark-configuration" class="hash-link" aria-label="Direct link to Benchmark Configuration" title="Direct link to Benchmark Configuration" translate="no">​</a></h2>
+<p>All benchmarks use:</p>
+<ul>
+<li><strong>Compiler</strong>: Clang 18 with libc++</li>
+<li><strong>Build Type</strong>: Debug (optimizations disabled for development)</li>
+<li><strong>Platform</strong>: Ubuntu Linux (GitHub Actions runner)</li>
+<li><strong>Fixed Seed</strong>: 42 (for deterministic results)</li>
+<li><strong>Tool</strong>: Google Benchmark v1.9.1</li>
+</ul>
+<div class="theme-admonition theme-admonition-note admonition_xJq3 alert alert--secondary"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 14 16"><path fill-rule="evenodd" d="M6.3 5.69a.942.942 0 0 1-.28-.7c0-.28.09-.52.28-.7.19-.18.42-.28.7-.28.28 0 .52.09.7.28.18.19.28.42.28.7 0 .28-.09.52-.28.7a1 1 0 0 1-.7.3c-.28 0-.52-.11-.7-.3zM8 7.99c-.02-.25-.11-.48-.31-.69-.2-.19-.42-.3-.69-.31H6c-.27.02-.48.13-.69.31-.2.2-.3.44-.31.69h1v3c.02.27.11.5.31.69.2.2.42.31.69.31h1c.27 0 .48-.11.69-.31.2-.19.3-.42.31-.69H8V7.98v.01zM7 2.3c-3.14 0-5.7 2.54-5.7 5.68 0 3.14 2.56 5.7 5.7 5.7s5.7-2.55 5.7-5.7c0-3.15-2.56-5.69-5.7-5.69v.01zM7 .98c3.86 0 7 3.14 7 7s-3.14 7-7 7-7-3.12-7-7 3.14-7 7-7z"></path></svg></span>note</div><div class="admonitionContent_BuS1"><p>Debug builds are significantly slower than Release builds. For production use, compile with <code>-DCMAKE_BUILD_TYPE=Release</code> for 5-10x speedup.</p></div></div>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="end-to-end-rrt-planning">End-to-End RRT Planning<a href="#end-to-end-rrt-planning" class="hash-link" aria-label="Direct link to End-to-End RRT Planning" title="Direct link to End-to-End RRT Planning" translate="no">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="simple-scenario-no-obstacles">Simple Scenario (No Obstacles)<a href="#simple-scenario-no-obstacles" class="hash-link" aria-label="Direct link to Simple Scenario (No Obstacles)" title="Direct link to Simple Scenario (No Obstacles)" translate="no">​</a></h3>
+<p>Open space from (-0.4, -0.4) to (0.4, 0.4) with no obstacles.</p>
+<table><thead><tr><th>Tree Size</th><th>Mean Time</th><th>Std Dev</th><th>Notes</th></tr></thead><tbody><tr><td>100 nodes</td><td>0.18 ms</td><td>±0.01 ms</td><td>Fast convergence</td></tr><tr><td>1000 nodes</td><td>0.18 ms</td><td>±0.01 ms</td><td>Reaches goal early</td></tr></tbody></table>
+<p><strong>Observation</strong>: Small tree size sufficient for simple scenes. Algorithm terminates upon reaching goal, so larger expansion limits don&#x27;t add overhead.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="complex-scenario-4-obstacles">Complex Scenario (4 Obstacles)<a href="#complex-scenario-4-obstacles" class="hash-link" aria-label="Direct link to Complex Scenario (4 Obstacles)" title="Direct link to Complex Scenario (4 Obstacles)" translate="no">​</a></h3>
+<p>Same start/goal with 4 circular obstacles (see <code>config/scenario.json</code>).</p>
+<table><thead><tr><th>Tree Size</th><th>Mean Time</th><th>Std Dev</th><th>Performance vs Simple</th></tr></thead><tbody><tr><td>100 nodes</td><td>0.22 ms</td><td>±0.01 ms</td><td>+22%</td></tr><tr><td>1000 nodes</td><td>1.7 ms</td><td>±0.1 ms</td><td>+850%</td></tr></tbody></table>
+<p><strong>Observations</strong>:</p>
+<ul>
+<li>Obstacles increase planning time by ~22% for small trees</li>
+<li>Large trees show significant slowdown (collision checking overhead)</li>
+<li>Most scenarios solvable with &lt; 1000 nodes</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="success-rate">Success Rate<a href="#success-rate" class="hash-link" aria-label="Direct link to Success Rate" title="Direct link to Success Rate" translate="no">​</a></h3>
+<p>Success rate depends on:</p>
+<ul>
+<li>Obstacle density and placement</li>
+<li>Expansion limit</li>
+<li>Sample distance relative to obstacle gaps</li>
+</ul>
+<p>No quantitative success rate data available yet (tracked in IMPROVEMENT_PLAN.md).</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="component-benchmarks">Component Benchmarks<a href="#component-benchmarks" class="hash-link" aria-label="Direct link to Component Benchmarks" title="Direct link to Component Benchmarks" translate="no">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="collision-detection-scaling">Collision Detection Scaling<a href="#collision-detection-scaling" class="hash-link" aria-label="Direct link to Collision Detection Scaling" title="Direct link to Collision Detection Scaling" translate="no">​</a></h3>
+<p>Line-circle intersection performance vs. obstacle count.</p>
+<table><thead><tr><th>Obstacles</th><th>Time per Check</th><th>Scaling Factor</th></tr></thead><tbody><tr><td>1</td><td>27 ns</td><td>1.0x (baseline)</td></tr><tr><td>10</td><td>27 ns</td><td>1.0x</td></tr><tr><td>100</td><td>27 ns</td><td>1.0x</td></tr></tbody></table>
+<p><strong>Analysis</strong>:</p>
+<ul>
+<li><strong>Constant time behavior</strong> in practice</li>
+<li>O(m) complexity hidden by:<!-- -->
+<ul>
+<li>Small absolute times (nanoseconds)</li>
+<li>Early termination on collision</li>
+<li>CPU branch prediction</li>
+</ul>
+</li>
+<li>Linear search adequate for &lt; 100 obstacles</li>
+</ul>
+<p><strong>Recommendation</strong>: For &gt; 1000 obstacles, consider spatial data structures (quadtree, BVH).</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="nearest-neighbor-search">Nearest Neighbor Search<a href="#nearest-neighbor-search" class="hash-link" aria-label="Direct link to Nearest Neighbor Search" title="Direct link to Nearest Neighbor Search" translate="no">​</a></h3>
+<p>Linear search performance vs. tree size.</p>
+<table><thead><tr><th>Tree Size</th><th>Time per Query</th><th>Scaling</th></tr></thead><tbody><tr><td>10 nodes</td><td>0.23 μs</td><td>Linear baseline</td></tr><tr><td>100 nodes</td><td>2.3 μs</td><td>10x (expected)</td></tr><tr><td>1000 nodes</td><td>20.2 μs</td><td>88x (~90x expected)</td></tr></tbody></table>
+<p><strong>Analysis</strong>:</p>
+<ul>
+<li>Clear <strong>O(n) linear scaling</strong></li>
+<li>Becomes bottleneck for large trees (&gt; 1000 nodes)</li>
+<li>Each RRT iteration requires one nearest neighbor query</li>
+</ul>
+<p><strong>Optimization Opportunity</strong>:</p>
+<ul>
+<li>For trees with &gt; 10,000 nodes, implement <strong>KD-tree</strong></li>
+<li>Expected improvement: O(n) → O(log n)</li>
+<li>Would reduce 1000-node query from 20μs to ~3μs</li>
+</ul>
+<p>Current implementation prioritizes simplicity over scalability, which is appropriate for typical robotics scenarios (&lt; 1000 nodes).</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="complexity-summary">Complexity Summary<a href="#complexity-summary" class="hash-link" aria-label="Direct link to Complexity Summary" title="Direct link to Complexity Summary" translate="no">​</a></h2>
+<table><thead><tr><th>Operation</th><th>Current</th><th>Optimal</th><th>When to Optimize</th></tr></thead><tbody><tr><td>Nearest neighbor</td><td>O(n)</td><td>O(log n) with KD-tree</td><td>Trees &gt; 10,000 nodes</td></tr><tr><td>Collision check</td><td>O(m)</td><td>O(log m) with BVH</td><td>Obstacles &gt; 1000</td></tr><tr><td>Tree expansion</td><td>O(n × m)</td><td>O(log n × log m)</td><td>Both conditions</td></tr></tbody></table>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="performance-bottlenecks">Performance Bottlenecks<a href="#performance-bottlenecks" class="hash-link" aria-label="Direct link to Performance Bottlenecks" title="Direct link to Performance Bottlenecks" translate="no">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="current-bottlenecks-by-contribution">Current Bottlenecks (by contribution)<a href="#current-bottlenecks-by-contribution" class="hash-link" aria-label="Direct link to Current Bottlenecks (by contribution)" title="Direct link to Current Bottlenecks (by contribution)" translate="no">​</a></h3>
+<ol>
+<li>
+<p><strong>Nearest Neighbor Search</strong> (dominant for large trees)</p>
+<ul>
+<li>Linear search scales poorly</li>
+<li>Each iteration requires full tree scan</li>
+<li>20μs per query for 1000 nodes</li>
+</ul>
+</li>
+<li>
+<p><strong>Collision Detection</strong> (dominant for many obstacles)</p>
+<ul>
+<li>O(m) checks per edge</li>
+<li>Minor overhead for typical scenes (&lt;100 obstacles)</li>
+<li>27ns per obstacle check</li>
+</ul>
+</li>
+<li>
+<p><strong>Random Sampling</strong> (negligible)</p>
+<ul>
+<li>Uniform distribution generation</li>
+<li>&lt; 1μs per sample</li>
+<li>Not a bottleneck</li>
+</ul>
+</li>
+</ol>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="optimization-priority">Optimization Priority<a href="#optimization-priority" class="hash-link" aria-label="Direct link to Optimization Priority" title="Direct link to Optimization Priority" translate="no">​</a></h3>
+<p>For typical use cases (&lt; 1000 nodes, &lt; 100 obstacles):</p>
+<ol>
+<li><strong>No optimization needed</strong> - current performance sufficient</li>
+<li>Algorithm completes in &lt; 2ms for complex scenes</li>
+</ol>
+<p>For large-scale scenarios (&gt; 10,000 nodes):</p>
+<ol>
+<li><strong>High priority</strong>: Implement KD-tree for nearest neighbor</li>
+<li><strong>Medium priority</strong>: Path extraction optimization</li>
+<li><strong>Low priority</strong>: Spatial hashing for collision detection</li>
+</ol>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="memory-usage">Memory Usage<a href="#memory-usage" class="hash-link" aria-label="Direct link to Memory Usage" title="Direct link to Memory Usage" translate="no">​</a></h2>
+<p>No quantitative measurements yet, but theoretical analysis:</p>
+<table><thead><tr><th>Component</th><th>Space Complexity</th><th>Typical Usage (1000 nodes)</th></tr></thead><tbody><tr><td>Nodes</td><td>O(n)</td><td>~32 KB (32 bytes/node)</td></tr><tr><td>Edges</td><td>O(n)</td><td>~32 KB (32 bytes/edge)</td></tr><tr><td>Obstacles</td><td>O(m)</td><td>~2.4 KB (24 bytes × 100)</td></tr><tr><td><strong>Total</strong></td><td><strong>O(n + m)</strong></td><td><strong>~66 KB</strong></td></tr></tbody></table>
+<p>Memory is not a concern for typical scenarios. Trees with millions of nodes would require memory optimization.</p>
+<div class="theme-admonition theme-admonition-note admonition_xJq3 alert alert--secondary"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 14 16"><path fill-rule="evenodd" d="M6.3 5.69a.942.942 0 0 1-.28-.7c0-.28.09-.52.28-.7.19-.18.42-.28.7-.28.28 0 .52.09.7.28.18.19.28.42.28.7 0 .28-.09.52-.28.7a1 1 0 0 1-.7.3c-.28 0-.52-.11-.7-.3zM8 7.99c-.02-.25-.11-.48-.31-.69-.2-.19-.42-.3-.69-.31H6c-.27.02-.48.13-.69.31-.2.2-.3.44-.31.69h1v3c.02.27.11.5.31.69.2.2.42.31.69.31h1c.27 0 .48-.11.69-.31.2-.19.3-.42.31-.69H8V7.98v.01zM7 2.3c-3.14 0-5.7 2.54-5.7 5.68 0 3.14 2.56 5.7 5.7 5.7s5.7-2.55 5.7-5.7c0-3.15-2.56-5.69-5.7-5.69v.01zM7 .98c3.86 0 7 3.14 7 7s-3.14 7-7 7-7-3.12-7-7 3.14-7 7-7z"></path></svg></span>note</div><div class="admonitionContent_BuS1"><p>For large-scale planning with &gt; 10,000 nodes, consider implementing spatial data structures for improved performance.</p></div></div>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="running-benchmarks">Running Benchmarks<a href="#running-benchmarks" class="hash-link" aria-label="Direct link to Running Benchmarks" title="Direct link to Running Benchmarks" translate="no">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="local-execution">Local Execution<a href="#local-execution" class="hash-link" aria-label="Direct link to Local Execution" title="Direct link to Local Execution" translate="no">​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token comment" style="color:#999988;font-style:italic"># Run with console output</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">pixi run benchmark</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic"># Save JSON results</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">pixi run benchmark-json</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic"># View JSON results</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token function" style="color:#d73a49">cat</span><span class="token plain"> build/benchmark_results.json</span><br></span></code></pre></div></div>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="ci-results">CI Results<a href="#ci-results" class="hash-link" aria-label="Direct link to CI Results" title="Direct link to CI Results" translate="no">​</a></h3>
+<p>Benchmarks run automatically on every push to main:</p>
+<ol>
+<li>Navigate to <a href="https://github.com/griswaldbrooks/spanny3/actions" target="_blank" rel="noopener noreferrer">GitHub Actions</a></li>
+<li>Select latest workflow run</li>
+<li>View &quot;Benchmark Results&quot; in step summary</li>
+<li>Download JSON artifact for detailed analysis</li>
+</ol>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="interpreting-results">Interpreting Results<a href="#interpreting-results" class="hash-link" aria-label="Direct link to Interpreting Results" title="Direct link to Interpreting Results" translate="no">​</a></h3>
+<p>Benchmark output format:</p>
+<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">Benchmark                           Time      CPU   Iterations</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">-----------------------------------------------------------------</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">BM_RRTPlanning_Simple/100        0.18 ms  0.18 ms     3947</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">BM_CollisionDetection/1          27 ns    27 ns       25683142</span><br></span></code></pre></div></div>
+<ul>
+<li><strong>Time</strong>: Wall clock time per iteration</li>
+<li><strong>CPU</strong>: CPU time per iteration</li>
+<li><strong>Iterations</strong>: Repetitions to achieve statistical significance</li>
+</ul>
+<p>Google Benchmark automatically determines iteration count for reliable measurements.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="comparison-with-other-implementations">Comparison with Other Implementations<a href="#comparison-with-other-implementations" class="hash-link" aria-label="Direct link to Comparison with Other Implementations" title="Direct link to Comparison with Other Implementations" translate="no">​</a></h2>
+<p>No direct comparisons available. General RRT performance expectations:</p>
+<ul>
+<li><strong>Simple scenes</strong>: Sub-millisecond planning</li>
+<li><strong>Complex scenes</strong>: 1-100ms depending on resolution</li>
+<li><strong>Very large trees</strong>: Seconds without spatial data structures</li>
+</ul>
+<p>Spanny3 performance is typical for educational RRT implementations. Production libraries (OMPL, MoveIt) use optimized data structures and achieve 10-100x speedups.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="future-improvements">Future Improvements<a href="#future-improvements" class="hash-link" aria-label="Direct link to Future Improvements" title="Direct link to Future Improvements" translate="no">​</a></h2>
+<p>Tracked in IMPROVEMENT_PLAN.md:</p>
+<ol>
+<li><strong>Performance benchmarks</strong>: Add memory profiling</li>
+<li><strong>Success rate analysis</strong>: Measure vs. obstacle density</li>
+<li><strong>Release build benchmarks</strong>: Quantify optimization impact</li>
+<li><strong>Regression detection</strong>: Fail CI if performance degrades</li>
+<li><strong>KD-tree implementation</strong>: For large-scale scenarios</li>
+</ol>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="see-also">See Also<a href="#see-also" class="hash-link" aria-label="Direct link to See Also" title="Direct link to See Also" translate="no">​</a></h2>
+<ul>
+<li><a href="/spanny3/docs/algorithm/rrt-overview">RRT Overview</a> - Algorithm details</li>
+<li><a href="/spanny3/docs/algorithm/collision-detection">Collision Detection</a> - Collision mathematics</li>
+<li><a href="/spanny3/docs/examples/benchmarking">Benchmarking Example</a> - Running custom benchmarks</li>
+<li><a href="https://github.com/griswaldbrooks/spanny3/actions" target="_blank" rel="noopener noreferrer">GitHub Actions</a> - Live CI results</li>
+</ul></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col"><a href="https://github.com/griswaldbrooks/spanny3/tree/main/docs/docs/algorithm/performance-analysis.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_Z9Sw" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_JAkA"></div></div></footer></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#benchmark-configuration" class="table-of-contents__link toc-highlight">Benchmark Configuration</a></li><li><a href="#end-to-end-rrt-planning" class="table-of-contents__link toc-highlight">End-to-End RRT Planning</a><ul><li><a href="#simple-scenario-no-obstacles" class="table-of-contents__link toc-highlight">Simple Scenario (No Obstacles)</a></li><li><a href="#complex-scenario-4-obstacles" class="table-of-contents__link toc-highlight">Complex Scenario (4 Obstacles)</a></li><li><a href="#success-rate" class="table-of-contents__link toc-highlight">Success Rate</a></li></ul></li><li><a href="#component-benchmarks" class="table-of-contents__link toc-highlight">Component Benchmarks</a><ul><li><a href="#collision-detection-scaling" class="table-of-contents__link toc-highlight">Collision Detection Scaling</a></li><li><a href="#nearest-neighbor-search" class="table-of-contents__link toc-highlight">Nearest Neighbor Search</a></li></ul></li><li><a href="#complexity-summary" class="table-of-contents__link toc-highlight">Complexity Summary</a></li><li><a href="#performance-bottlenecks" class="table-of-contents__link toc-highlight">Performance Bottlenecks</a><ul><li><a href="#current-bottlenecks-by-contribution" class="table-of-contents__link toc-highlight">Current Bottlenecks (by contribution)</a></li><li><a href="#optimization-priority" class="table-of-contents__link toc-highlight">Optimization Priority</a></li></ul></li><li><a href="#memory-usage" class="table-of-contents__link toc-highlight">Memory Usage</a></li><li><a href="#running-benchmarks" class="table-of-contents__link toc-highlight">Running Benchmarks</a><ul><li><a href="#local-execution" class="table-of-contents__link toc-highlight">Local Execution</a></li><li><a href="#ci-results" class="table-of-contents__link toc-highlight">CI Results</a></li><li><a href="#interpreting-results" class="table-of-contents__link toc-highlight">Interpreting Results</a></li></ul></li><li><a href="#comparison-with-other-implementations" class="table-of-contents__link toc-highlight">Comparison with Other Implementations</a></li><li><a href="#future-improvements" class="table-of-contents__link toc-highlight">Future Improvements</a></li><li><a href="#see-also" class="table-of-contents__link toc-highlight">See Also</a></li></ul></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Documentation</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/spanny3/docs/getting-started/installation">Getting Started</a></li><li class="footer__item"><a class="footer__link-item" href="/spanny3/docs/api/core-types">API Reference</a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Project</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://github.com/griswaldbrooks/spanny3" target="_blank" rel="noopener noreferrer" class="footer__link-item">GitHub<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li><li class="footer__item"><a href="https://github.com/griswaldbrooks/spanny3/issues" target="_blank" rel="noopener noreferrer" class="footer__link-item">Issues<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li><li class="footer__item"><a href="https://github.com/griswaldbrooks/spanny3/actions" target="_blank" rel="noopener noreferrer" class="footer__link-item">CI/CD<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2025 Griswald Brooks. Built with Docusaurus.</div></div></div></footer></div>
+</body>
+</html>
